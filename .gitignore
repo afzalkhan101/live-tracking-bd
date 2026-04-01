@@ -1,0 +1,30 @@
+# ── Dependencies ──────────────────────────────────
+node_modules/
+vendor/
+__pycache__/
+*.py[cod]
+
+# ── Build outputs ─────────────────────────────────
+dist/
+build/
+out/
+*.egg-info/
+*.so
+*.o
+
+# ── Environment & secrets ──────────────────────────
+.env
+.env.*
+*.pem
+*.key
+
+# ── Editor & OS ────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ── Logs & temp ────────────────────────────────────
+*.log
+*.tmp
+*.cache
