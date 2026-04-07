@@ -17,8 +17,6 @@
     "assets": {
         "web.assets_backend": [
             "/salesperson_tracking/static/src/js/live_map.js",
-            "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
-            "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
         ]
     },
     "application": False,

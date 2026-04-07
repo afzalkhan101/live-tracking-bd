@@ -1,41 +1,43 @@
-odoo.define('salesperson_tracking.map_live', function(require){
-    "use strict";
-    var AbstractAction = require('web.AbstractAction');
-    var rpc = require('web.rpc');
+/** @odoo-module **/
 
-    var LiveMap = AbstractAction.extend({
-        template: 'LiveMapTemplate',
-        start: async function(){
-            this.map = L.map(this.$el[0]).setView([23.8103, 90.4125], 12); // Dhaka Example
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-            }).addTo(this.map);
+import { registry } from "@web/core/registry";
+import { MapController } from "@web_map/map_view/map_controller";
+import { onMounted, onWillUnmount } from "@odoo/owl";
 
-            this.markers = {};
-            await this.updateMarkers();
-            setInterval(this.updateMarkers.bind(this), 5000); 
-        },
-        updateMarkers: async function(){
-            var self = this;
-            const res = await rpc.query({
-                model: 'salesperson.tracker',
-                method: 'search_read',
-                fields: ['user_id','latitude','longitude','tracking_status'],
-                domain: [('tracking_status','=','live')],
-            });
+export class RefreshMapController extends MapController {
+    setup() {
+        super.setup();
+        let interval;
 
-            res.forEach(function(record){
-                var id = record.user_id[0];
-                if(self.markers[id]){
-                    self.markers[id].setLatLng([record.latitude, record.longitude]);
-                } else {
-                    var marker = L.marker([record.latitude, record.longitude]).addTo(self.map)
-                        .bindPopup(record.user_id[1]);
-                    self.markers[id] = marker;
+        onMounted(() => {
+            // Log to verify the controller is actually being used
+            console.log("Auto-refresh Controller Mounted");
+
+            interval = setInterval(async () => {
+                // Check if the model and root exist to avoid errors during transitions
+                if (this.model && this.model.root) {
+                    console.log("Refreshing Map Data...");
+                    
+                    // .load() fetches data; .render() updates the screen
+                    // Using .reload() is often more effective in newer versions
+                    await this.model.root.load();
+                    this.render(); 
                 }
-            });
-        }
-    });
+            }, 5000);
+        });
 
-    return LiveMap;
+        onWillUnmount(() => {
+            if (interval) {
+                clearInterval(interval);
+            }
+        });
+    }
+}
+
+// Ensure we get the base map view definition properly
+const mapView = registry.category("views").get("map");
+
+registry.category("views").add("refresh_map_view", {
+    ...mapView,
+    Controller: RefreshMapController,
 });
