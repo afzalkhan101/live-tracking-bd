@@ -229,10 +229,34 @@
         <field name="url">/salesperson_tracking/live</field>
         <field name="target">self</field>
     </record>
+    
+    <menuitem id="menu_salesperson_tracking_root"
+            name="Salesperson Tracking"
+            action="action_salesperson_tracker_dashboard"
+            sequence="10"/>
 
-    <menuitem id="menu_salesperson_tracking_root" name="Salesperson Tracking" parent="sale.sale_menu_root" sequence="65" groups="sales_team.group_sale_salesman"/>
-    <menuitem id="menu_salesperson_tracking_live" name="Live Tracking" parent="menu_salesperson_tracking_root" action="action_salesperson_live_page" sequence="1" groups="sales_team.group_sale_salesman"/>
-    <menuitem id="menu_salesperson_tracking_my" name="My Status" parent="menu_salesperson_tracking_root" action="action_salesperson_tracker_my" sequence="2" groups="sales_team.group_sale_salesman"/>
-    <menuitem id="menu_salesperson_tracking_dashboard" name="Team Dashboard" parent="menu_salesperson_tracking_root" action="action_salesperson_tracker_dashboard" sequence="5" groups="sales_team.group_sale_manager"/>
-    <menuitem id="menu_salesperson_tracking_history" name="Location History" parent="menu_salesperson_tracking_root" action="action_salesperson_location_history" sequence="10" groups="sales_team.group_sale_manager"/>
+    <!-- Sub Menus -->
+    <menuitem id="menu_salesperson_tracking_live"
+            name="Live Tracking"
+            parent="menu_salesperson_tracking_root"
+            action="action_salesperson_live_page"
+            sequence="1"/>
+
+    <menuitem id="menu_salesperson_tracking_my"
+            name="My Status"
+            parent="menu_salesperson_tracking_root"
+            action="action_salesperson_tracker_my"
+            sequence="2"/>
+
+    <menuitem id="menu_salesperson_tracking_dashboard"
+            name="Team Dashboard"
+            parent="menu_salesperson_tracking_root"
+            action="action_salesperson_tracker_dashboard"
+            sequence="5"/>
+
+    <menuitem id="menu_salesperson_tracking_history"
+            name="Location History"
+            parent="menu_salesperson_tracking_root"
+            action="action_salesperson_location_history"
+            sequence="10"/>
 </odoo>
