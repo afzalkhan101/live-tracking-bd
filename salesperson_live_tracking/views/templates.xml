@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ══════════════════════════════════════════════════════════
-         TEMPLATE 1: Salesperson Live Tracking Page
-         Route: /salesperson_tracking/my  (or your existing route)
-    ══════════════════════════════════════════════════════════ -->
     <template id="live_tracking_page" name="Salesperson Live Tracking">
         <html lang="en">
             <head>
@@ -511,12 +507,6 @@
             </body>
         </html>
     </template>
-
-
-    <!-- ══════════════════════════════════════════════════════════
-         TEMPLATE 2: Moving Map View  (manager / admin view)
-         Route: /salesperson_tracking/map/<tracker_id>
-    ══════════════════════════════════════════════════════════ -->
     <template id="moving_map_page" name="Salesperson Moving Map View">
         <html lang="en">
             <head>
