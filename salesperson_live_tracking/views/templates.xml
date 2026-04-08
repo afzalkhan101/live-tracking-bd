@@ -253,9 +253,16 @@
                                 </span>
                             </div>
                         </div>
-
                         <!-- Metrics -->
+
                         <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-label">Location</div>
+                                <div class="metric-value" id="locationNameValue">
+                                    <t t-out="tracker.location_name or '—'"/>
+                                </div>
+                            </div>
+
                             <div class="metric-card">
                                 <div class="metric-label">Last update</div>
                                 <div class="metric-value" id="lastSeenValue">
@@ -274,12 +281,7 @@
                                     <t t-out="tracker.longitude or '—'"/>
                                 </div>
                             </div>
-                            <div class="metric-card">
-                                <div class="metric-label">Location</div>
-                                <div class="metric-value" id="locationNameValue">
-                                    <t t-out="tracker.location_name or '—'"/>
-                                </div>
-                            </div>
+                            
                             <div class="metric-card">
                                 <div class="metric-label">Accuracy</div>
                                 <div class="metric-value" id="accuracyValue">
