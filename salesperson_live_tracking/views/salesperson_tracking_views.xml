@@ -4,7 +4,10 @@
         <field name="name">salesperson.tracker.tree</field>
         <field name="model">salesperson.tracker</field>
         <field name="arch" type="xml">
-            <list string="Salesperson Tracking" decoration-success="tracking_status == 'live'" decoration-warning="tracking_status == 'idle'" decoration-muted="tracking_status == 'offline'">
+            <list string="Salesperson Tracking"
+                  decoration-success="tracking_status == 'live'"
+                  decoration-warning="tracking_status == 'idle'"
+                  decoration-muted="tracking_status == 'offline'">
                 <field name="user_id"/>
                 <field name="sale_team_id" optional="show"/>
                 <field name="tracking_status"/>
@@ -13,9 +16,11 @@
                 <field name="last_speed" optional="hide"/>
                 <field name="today_plan_count" optional="show"/>
                 <field name="today_covered_count" optional="show"/>
+                <field name="kpi_visit_completion_rate" string="Completion %" optional="show"/>
                 <field name="location_name" optional="show"/>
                 <field name="latitude" optional="show"/>
                 <field name="longitude" optional="show"/>
+                <field name="route_deviation_alert" optional="show" string="Deviation Alert"/>
             </list>
         </field>
     </record>
@@ -36,7 +41,9 @@
                 <field name="history_count"/>
                 <field name="today_plan_count"/>
                 <field name="today_covered_count"/>
+                <field name="kpi_visit_completion_rate"/>
                 <field name="location_name"/>
+                <field name="route_deviation_alert"/>
                 <templates>
                     <t t-name="card">
                         <div class="o_kanban_card o_kanban_record">
@@ -49,35 +56,38 @@
                                         <field name="sale_team_id"/>
                                     </span>
                                 </div>
-                                <span t-attf-class="badge rounded-pill #{record.tracking_status.raw_value == 'live' and 'text-bg-success' or record.tracking_status.raw_value == 'idle' and 'text-bg-warning' or 'text-bg-secondary'}">
-                                    <field name="tracking_status_label"/>
-                                </span>
+                                <div class="d-flex flex-column align-items-end gap-1">
+                                    <span t-attf-class="badge rounded-pill #{record.tracking_status.raw_value == 'live' and 'text-bg-success' or record.tracking_status.raw_value == 'idle' and 'text-bg-warning' or 'text-bg-secondary'}">
+                                        <field name="tracking_status_label"/>
+                                    </span>
+                                    <span t-if="record.route_deviation_alert.raw_value" class="badge text-bg-danger">
+                                        ⚠ Deviation
+                                    </span>
+                                </div>
                             </div>
                             <div class="mb-2 text-body-secondary">
                                 <i class="fa fa-clock-o me-1"/>
                                 <field name="last_seen"/>
                             </div>
-                            <div class="d-flex justify-content-between small mb-2">
-                                <span>Lat: <field name="latitude"/></span>
-                                <span>Lng: <field name="longitude"/></span>
-                            </div>
-                            <div class="small mb-3">
+                            <div class="small mb-2">
                                 <strong>Location:</strong> <field name="location_name"/>
+                            </div>
+                            <div class="d-flex justify-content-between small mb-2">
+                                <span>Planned: <strong><field name="today_plan_count"/></strong></span>
+                                <span>Covered: <strong><field name="today_covered_count"/></strong></span>
+                                <span>Rate: <strong><field name="kpi_visit_completion_rate"/>%</strong></span>
                             </div>
                             <div class="d-flex justify-content-between small mb-3">
                                 <span>Accuracy: <field name="last_accuracy"/> m</span>
                                 <span>Logs: <field name="history_count"/></span>
                             </div>
-                            <div class="d-flex justify-content-between small mb-3">
-                                <span>Planned: <field name="today_plan_count"/></span>
-                                <span>Covered: <field name="today_covered_count"/></span>
-                            </div>
                             <footer class="d-flex gap-2 flex-wrap">
                                 <button type="object" name="action_open_live_tracking_page" class="btn btn-primary btn-sm">Live Page</button>
-                                <button type="object" name="action_view_history" class="btn btn-outline-secondary btn-sm">History</button>
                                 <button type="object" name="action_open_moving_map_view" class="btn btn-outline-primary btn-sm">
-                                   Moving Map View
+                                    <i class="fa fa-map-marker me-1"/>Map
                                 </button>
+                                <button type="object" name="action_view_checkins" class="btn btn-outline-secondary btn-sm">Check-Ins</button>
+                                <button type="object" name="action_view_kpi" class="btn btn-outline-secondary btn-sm">KPI</button>
                             </footer>
                         </div>
                     </t>
@@ -95,6 +105,7 @@
                     <button name="action_open_live_tracking_page" type="object" string="Open Live Page" class="btn-primary"/>
                     <button name="action_view_history" type="object" string="Location History"/>
                     <button name="action_view_today_visit_plan" type="object" string="Today's Visit Plan"/>
+                    <button name="action_open_moving_map_view" type="object" string="Moving Map"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -108,6 +119,18 @@
                             <div class="o_stat_info">
                                 <field name="today_covered_count" class="o_stat_value"/>
                                 <span class="o_stat_text">Covered Today</span>
+                            </div>
+                        </button>
+                        <button name="action_view_checkins" type="object" class="oe_stat_button" icon="fa-check-circle">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">0</span>
+                                <span class="o_stat_text">Check-Ins</span>
+                            </div>
+                        </button>
+                        <button name="action_view_kpi" type="object" class="oe_stat_button" icon="fa-bar-chart">
+                            <div class="o_stat_info">
+                                <field name="kpi_visit_completion_rate" class="o_stat_value"/>
+                                <span class="o_stat_text">KPI %</span>
                             </div>
                         </button>
                     </div>
@@ -125,6 +148,7 @@
                             <field name="last_accuracy"/>
                             <field name="last_speed"/>
                             <field name="last_heading"/>
+                            <field name="route_deviation_alert"/>
                         </group>
                         <group string="Location">
                             <field name="partner_id"/>
@@ -136,10 +160,13 @@
                         <group string="Today's Visits">
                             <field name="today_plan_count" readonly="1"/>
                             <field name="today_covered_count" readonly="1"/>
-                            <field name="today_visit_summary" readonly="1" widget="text" nolabel="1" placeholder="No planned locations for today."/>
+                            <field name="kpi_visit_completion_rate" readonly="1" string="Completion Rate (%)"/>
+                            <field name="today_visit_summary" readonly="1" widget="text" nolabel="1"
+                                   placeholder="No planned locations for today."/>
                         </group>
                     </group>
                 </sheet>
+                <chatter/>
             </form>
         </field>
     </record>
@@ -148,10 +175,7 @@
         <field name="name">salesperson.tracker.map</field>
         <field name="model">salesperson.tracker</field>
         <field name="arch" type="xml">
-            <map string="Live Salespersons" 
-                res_partner="partner_id" 
-                hide_address="1" 
-                js_class="refresh_map_view">
+            <map string="Live Salespersons" res_partner="partner_id" hide_address="1">
                 <field name="user_id" string="Salesperson"/>
                 <field name="tracking_status_label" string="Status"/>
                 <field name="last_seen" string="Last Update"/>
@@ -205,11 +229,11 @@
         </field>
     </record>
 
+    <!-- Actions -->
     <record id="action_salesperson_tracker_dashboard" model="ir.actions.act_window">
         <field name="name">Salesperson Tracking</field>
         <field name="res_model">salesperson.tracker</field>
         <field name="view_mode">kanban,list,form,map</field>
-        <field name="domain">[('tracking_status', '=', 'live')]</field>
     </record>
 
     <record id="action_salesperson_tracker_my" model="ir.actions.act_window">
@@ -233,39 +257,35 @@
         <field name="target">self</field>
     </record>
 
-    <record id="action_salesperson_tracker_map_only" model="ir.actions.act_window">
-        <field name="name">Map View</field>
-        <field name="res_model">salesperson.tracker</field>
-        <field name="view_mode">map</field>
-    </record>
-
+    <!-- Menu Structure -->
     <menuitem id="menu_salesperson_tracking_root"
-            name="Salesperson Tracking"
-            action="action_salesperson_tracker_dashboard"
-            sequence="10" web_icon="salesperson_live_tracking,static/description/icon.png"/>
+              name="Salesperson Tracking"
+              action="action_salesperson_tracker_dashboard"
+              sequence="10"
+              web_icon="salesperson_live_tracking,static/description/icon.png"/>
 
-   
     <menuitem id="menu_salesperson_tracking_live"
-            name="Live Tracking"
-            parent="menu_salesperson_tracking_root"
-            action="action_salesperson_live_page"
-            sequence="1"/>
+              name="Live Tracking"
+              parent="menu_salesperson_tracking_root"
+              action="action_salesperson_live_page"
+              sequence="1"/>
 
     <menuitem id="menu_salesperson_tracking_my"
-            name="My Status"
-            parent="menu_salesperson_tracking_root"
-            action="action_salesperson_tracker_my"
-            sequence="2"/>
+              name="My Status"
+              parent="menu_salesperson_tracking_root"
+              action="action_salesperson_tracker_my"
+              sequence="2"/>
 
     <menuitem id="menu_salesperson_tracking_dashboard"
-            name="Team Dashboard"
-            parent="menu_salesperson_tracking_root"
-            action="action_salesperson_tracker_dashboard"
-            sequence="5"/>
+              name="Team Dashboard"
+              parent="menu_salesperson_tracking_root"
+              action="action_salesperson_tracker_dashboard"
+              sequence="5"
+              groups="sales_team.group_sale_manager"/>
 
     <menuitem id="menu_salesperson_tracking_history"
-            name="Location History"
-            parent="menu_salesperson_tracking_root"
-            action="action_salesperson_location_history"
-            sequence="10"/>
+              name="Location History"
+              parent="menu_salesperson_tracking_root"
+              action="action_salesperson_location_history"
+              sequence="10"/>
 </odoo>

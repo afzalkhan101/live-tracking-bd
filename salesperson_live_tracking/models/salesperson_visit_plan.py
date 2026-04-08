@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import datetime, time, timedelta
 from math import asin, cos, radians, sin, sqrt
 import pytz
-from odoo import api, fields, models
+from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 
 
@@ -13,7 +13,12 @@ def _haversine_distance_meters(lat1, lon1, lat2, lon2):
     a = sin(dlat / 2.0) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2.0) ** 2
     return 2.0 * radius * asin(sqrt(a))
 
+
 class SalespersonVisitPlan(models.Model):
+    """
+    Req #6: Route Planning & Assignment (manager assigns locations)
+    Req #4: Route Coverage & Map Visualization (visited=green, unvisited=red)
+    """
     _name = "salesperson.visit.plan"
     _description = "Salesperson Planned Visit"
     _order = "visit_date desc, sequence, id"
@@ -37,7 +42,24 @@ class SalespersonVisitPlan(models.Model):
     stay_duration_minutes = fields.Float(compute="_compute_visit_metrics", digits=(16, 2))
     stay_duration_display = fields.Char(compute="_compute_visit_metrics")
     openstreetmap_url = fields.Char(compute="_compute_map_url")
-    
+
+    # Route assignment notes (Req #6)
+    manager_notes = fields.Text(string="Manager Notes / Instructions")
+    priority = fields.Selection(
+        [("0", "Normal"), ("1", "High"), ("2", "Urgent")],
+        string="Priority",
+        default="0",
+    )
+
+    # Coverage color indicator (Req #4)
+    coverage_color = fields.Integer(compute="_compute_coverage_color", string="Color")
+
+    @api.depends("is_covered")
+    def _compute_coverage_color(self):
+        for plan in self:
+            # 10=green (covered), 1=red (not covered)
+            plan.coverage_color = 10 if plan.is_covered else 1
+
     @api.onchange("partner_id")
     def _onchange_partner_id(self):
         for plan in self:

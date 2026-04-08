@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
     <template id="live_tracking_page" name="Salesperson Live Tracking">
         <html lang="en">
             <head>
@@ -227,6 +226,79 @@
                         .header-row  { flex-direction: column; }
                         .action-bar .btn { flex: 1 1 calc(50% - 4px); justify-content: center; }
                     }
+
+                   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+                  :root{
+                    --radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-xl:20px;
+                    --shadow-card:0 1px 4px rgba(0,0,0,.08),0 0 0 .5px rgba(0,0,0,.06);
+                    --shadow-btn:0 1px 3px rgba(0,0,0,.12);
+                    --green-50:#eaf3de;--green-100:#c0dd97;--green-600:#3b6d11;--green-700:#27500a;
+                    --amber-50:#faeeda;--amber-400:#ef9f27;--amber-700:#854f0b;
+                    --gray-50:#f8f9fa;--gray-100:#f1f3f5;--gray-200:#e9ecef;
+                    --gray-400:#868e96;--gray-600:#495057;--gray-900:#212529;
+                    --purple:#4a1942;--purple-dk:#3a1233;
+                    --red-50:#fcebeb;--red-600:#a32d2d;--red-border:#f09595;
+                    --blue-50:#e6f1fb;--blue-400:#378add;--blue-600:#185fa5;
+                    --bg:#f4f6f8;--surface:#ffffff;--border:rgba(0,0,0,.08);
+                    --text:#1a1d23;--muted:#6b7280;--faint:#9ca3af;
+                  }
+                  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:20px 14px;font-size:14px;line-height:1.5}
+                  .shell{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+                  .card{background:var(--surface);border-radius:var(--radius-xl);border:.5px solid var(--border);box-shadow:var(--shadow-card);padding:22px}
+                  .header-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+                  .page-title{font-size:19px;font-weight:500;color:var(--text);margin-bottom:3px}
+                  .page-sub{color:var(--muted);font-size:13px}
+                  .status-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:999px;font-size:12px;font-weight:500;flex-shrink:0;letter-spacing:.02em}
+                  .status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+                  .badge-live{background:var(--green-50);color:var(--green-600);border:.5px solid var(--green-100)}
+                  .badge-idle{background:var(--amber-50);color:var(--amber-700);border:.5px solid var(--amber-400)}
+                  .badge-offline{background:var(--gray-100);color:var(--gray-400);border:.5px solid var(--gray-200)}
+                  .dot-live{background:var(--green-600)}.dot-idle{background:var(--amber-400)}.dot-offline{background:var(--gray-400)}
+                  @keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(59,109,17,.4)}70%{box-shadow:0 0 0 7px rgba(59,109,17,0)}100%{box-shadow:0 0 0 0 rgba(59,109,17,0)}}
+                  .dot-live{animation:pulse-ring 1.8s infinite}
+                  .metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin-bottom:18px}
+                  .metric-card{background:var(--gray-50);border:.5px solid var(--border);border-radius:var(--radius-md);padding:11px 13px}
+                  .metric-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);margin-bottom:4px;font-weight:500}
+                  .metric-value{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+                  .metric-value.mono{font-family:monospace;font-size:14px;color:var(--green-600)}
+                  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
+                  .kpi-box{background:var(--blue-50);border:.5px solid #b5d4f4;border-radius:var(--radius-md);padding:10px;text-align:center}
+                  .kpi-num{font-size:1.4rem;font-weight:500;color:var(--blue-600)}
+                  .kpi-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+                  .action-bar{display:flex;flex-wrap:wrap;gap:8px}
+                  .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-md);font-size:13px;font-weight:500;cursor:pointer;border:.5px solid var(--border);background:var(--surface);color:var(--text);text-decoration:none;box-shadow:var(--shadow-btn);transition:background .15s,transform .1s;white-space:nowrap}
+                  .btn:hover{background:var(--gray-50)}.btn:active{transform:scale(.98)}
+                  .btn-primary{background:var(--green-600);color:#fff;border-color:var(--green-600)}
+                  .btn-primary:hover{background:var(--green-700)}
+                  .btn-danger{background:var(--surface);color:var(--red-600);border-color:var(--red-border)}
+                  .btn-danger:hover{background:var(--red-50)}
+                  .btn-warn{background:var(--amber-50);color:var(--amber-700);border-color:var(--amber-400)}
+                  .btn-warn:hover{background:#fde5b8}
+                  .btn:disabled{opacity:.42;cursor:not-allowed;transform:none!important}
+                  .notice{margin-top:16px;padding:12px 15px;border-radius:var(--radius-md);border:.5px solid #bfdbfe;background:#eff6ff;font-size:13px;color:#1d4ed8}
+                  .notice strong{font-weight:500;margin-right:5px}
+                  .notice.notice-success{background:var(--green-50);border-color:var(--green-100);color:var(--green-600)}
+                  .notice.notice-warning{background:var(--amber-50);border-color:var(--amber-400);color:var(--amber-700)}
+                  .notice.notice-danger{background:var(--red-50);border-color:var(--red-border);color:var(--red-600)}
+                  .offline-badge{display:none;background:var(--amber-50);color:var(--amber-700);border:.5px solid var(--amber-400);border-radius:var(--radius-sm);padding:5px 10px;font-size:12px;font-weight:500;margin-top:8px}
+                  .offline-badge.show{display:block}
+                  .checkin-panel{background:var(--green-50);border:.5px solid var(--green-100);border-radius:var(--radius-lg);padding:14px;margin-top:16px;display:none}
+                  .checkin-panel.active{background:var(--amber-50);border-color:var(--amber-400)}
+                  .checkin-title{font-weight:500;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:6px;color:var(--green-600)}
+                  .checkin-panel.active .checkin-title{color:var(--amber-700)}
+                  #map{height:260px;border-radius:var(--radius-lg);overflow:hidden;margin-top:14px;border:.5px solid var(--border)}
+                  .selfie-wrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+                  #selfiePreview{width:116px;height:116px;border-radius:var(--radius-md);object-fit:cover;border:.5px solid var(--border);display:none}
+                  #selfieCanvas{display:none}
+                  video#selfieVideo{width:220px;height:165px;border-radius:var(--radius-md);border:.5px solid var(--green-600);display:none}
+                  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:none;align-items:center;justify-content:center;padding:16px}
+                  .modal-overlay.open{display:flex}
+                  .modal-box{background:var(--surface);border-radius:var(--radius-xl);border:.5px solid var(--border);padding:22px;width:min(460px,100%);max-height:90vh;overflow-y:auto}
+                  .modal-box h2{font-size:15px;font-weight:500;margin-bottom:14px}
+                  .form-group{margin-bottom:11px}
+                  .form-group label{display:block;font-size:11px;font-weight:500;margin-bottom:4px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
+                  .form-group textarea,.form-group select{width:100%;border:.5px solid var(--border);border-radius:var(--radius-md);padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;background:var(--surface);color:var(--text)}
+                  @media(max-width:560px){.action-bar .btn{flex:1 1 calc(50% - 4px);justify-content:center}.header-row{flex-direction:column}}
                 </style>
             </head>
             <body>
@@ -294,6 +366,24 @@
                             </div>
                         </div>
 
+                      <div class="kpi-row">
+                        <div class="kpi-box">
+                          <div class="kpi-num" id="kpiPlan"><t t-out="today_plan_count"/></div>
+                          <div class="kpi-lbl">Planned</div>
+                        </div>
+                        <div class="kpi-box">
+                          <div class="kpi-num" id="kpiCovered"><t t-out="today_covered_count"/></div>
+                          <div class="kpi-lbl">Covered</div>
+                        </div>
+                        <div class="kpi-box">
+                          <div class="kpi-num" id="kpiRate">
+                            <t t-if="today_plan_count"><t t-out="'%d' % (today_covered_count * 100 // today_plan_count)"/>%</t>
+                            <t t-else="">0%</t>
+                          </div>
+                          <div class="kpi-lbl">Rate</div>
+                        </div>
+                      </div>
+
                         <!-- Actions -->
                         <div class="action-bar">
                             <button id="startButton" class="btn btn-primary" type="button">
@@ -322,6 +412,16 @@
                                 </svg>
                                 Open in map
                             </a>
+                        </div>
+
+                        <div id="checkinPanel" class="checkin-panel" style="display:none">
+                          <div class="checkin-title">&#9989; Checked in</div>
+                          <div style="font-size:12px;color:var(--green-600)">
+                            <strong id="checkinLocation">—</strong> · <span id="checkinTime">—</span>
+                          </div>
+                          <div style="margin-top:8px">
+                            <button id="addNotesBtn" class="btn" type="button" style="font-size:12px;padding:5px 10px">&#128221; Add notes</button>
+                          </div>
                         </div>
 
                         <!-- Notice -->
@@ -539,6 +639,8 @@
                             }
                         });
                     })();
+
+                    
                 </script>
             </body>
         </html>
@@ -549,8 +651,7 @@
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
                 <title>Moving Map — <t t-out="tracker.user_id.name"/></title>
-                <link rel="stylesheet"
-                      href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css"/>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css"/>
                 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
                 <style>
                     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -755,154 +856,185 @@
                 </div>
 
                 <!-- Map -->
-                <div class="map-wrapper">
-                    <div id="map" t-att-data-points="location_points_b64"/>
+                 <div class="map-wrapper">
+                      <div id="map"
+                          t-att-data-points="location_points_b64"
+                          t-att-data-plans="plan_markers_b64"/>
 
-                    <!-- Legend -->
-                    <div class="legend">
-                        <div class="legend-row">
-                            <span class="legend-dot" style="background:#3b6d11;"/>
-                            Start point
-                        </div>
-                        <div class="legend-row">
-                            <span class="legend-dot" style="background:#dc2626;"/>
-                            Current / last point
-                        </div>
-                        <div class="legend-row">
-                            <span class="legend-line" style="background:#6366f1;opacity:.85;"/>
-                            Movement path
-                        </div>
-                        <div class="legend-row">
-                            <span class="legend-dot" style="background:#3b82f6;opacity:.4;"/>
-                            GPS accuracy circle
-                        </div>
+                      <div class="legend">
+                        <div class="legend-row"><span class="legend-dot" style="background:#3b6d11"/> Start point</div>
+                        <div class="legend-row"><span class="legend-dot" style="background:#dc2626"/> Current / last point</div>
+                        <div class="legend-row"><span class="legend-line" style="background:#6366f1;opacity:.85"/> Movement path</div>
+                        <div class="legend-row"><span class="legend-dot" style="background:#3b6d11;opacity:.4"/> Visited location</div>
+                        <div class="legend-row"><span class="legend-dot" style="background:#dc2626;opacity:.4"/> Unvisited location</div>
+                      </div>
                     </div>
-                </div>
 
-                <script>
-//<![CDATA[
-                    (function () {
-                        var mapEl  = document.getElementById('map');
-                        var b64    = mapEl.getAttribute('data-points') || '';
-                        var points = [];
 
-                        try { points = JSON.parse(atob(b64)); } catch (e) { points = []; }
+            <script>
+              //<![CDATA[
+              (function () {
+                  var mapEl  = document.getElementById('map');
+                  var b64    = mapEl.getAttribute('data-points') || '';
+                  var planB64 = mapEl.getAttribute('data-plans') || '';
+                  var points = [];
+                  var plans  = [];
 
-                        var DEFAULT_CENTER = [23.7701, 90.4254];
-                        var map = L.map('map').setView(DEFAULT_CENTER, 15);
+                  try { points = JSON.parse(atob(b64));     } catch (e) { points = []; }
+                  try { plans  = JSON.parse(atob(planB64)); } catch (e) { plans  = []; }
 
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '\u00a9 <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                            maxZoom: 19,
-                        }).addTo(map);
+                  var DEFAULT_CENTER = [23.7701, 90.4254];
+                  var map = L.map('map', { zoomControl: true }).setView(DEFAULT_CENTER, 15);
 
-                        /* No data state */
-                        if (!points || points.length === 0) {
-                            var nd = document.createElement('div');
-                            nd.className = 'no-data';
-                            nd.innerHTML = [
-                                '<div class="no-data-card">',
-                                '  <div class="no-data-icon">',
-                                '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">',
-                                '      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>',
-                                '    </svg>',
-                                '  </div>',
-                                '  <div class="no-data-title">No location data</div>',
-                                '  <div class="no-data-sub">No GPS logs available for today.</div>',
-                                '</div>',
-                            ].join('');
-                            document.querySelector('.map-wrapper').appendChild(nd);
-                            return;
-                        }
+                  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                      attribution: '\u00a9 <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                      maxZoom: 19,
+                  }).addTo(map);
 
-                        /* Filter out extreme inaccuracy */
-                        var valid = points.filter(function (p) {
-                            return p.accuracy &lt;= 2000 || p.accuracy === 0;
-                        });
-                        if (valid.length === 0) valid = points;
+                  /* ── No data state ── */
+                  if (!points || points.length === 0) {
+                      var nd = document.createElement('div');
+                      nd.className = 'no-data';
+                      nd.innerHTML = [
+                          '<div class="no-data-card">',
+                          '  <div class="no-data-icon">',
+                          '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">',
+                          '      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>',
+                          '    </svg>',
+                          '  </div>',
+                          '  <div class="no-data-title">No location data</div>',
+                          '  <div class="no-data-sub">No GPS logs available for today.</div>',
+                          '</div>',
+                      ].join('');
+                      document.querySelector('.map-wrapper').appendChild(nd);
+                      return;
+                  }
 
-                        /* Path polyline */
-                        var latlngs = valid.map(function (p) { return [p.lat, p.lng]; });
-                        L.polyline(latlngs, {
-                            color:     '#6366f1',
-                            weight:    3,
-                            opacity:   0.85,
-                            dashArray: '7 5',
-                        }).addTo(map);
+                  /* ── Filter extreme inaccuracy ── */
+                  var valid = points.filter(function (p) {
+                      return typeof p.lat === 'number' && typeof p.lng === 'number'
+                            && (p.accuracy <= 2000 || p.accuracy === 0);
+                  });
+                  if (valid.length === 0) valid = points;
 
-                        /* Accuracy circles + intermediate markers */
-                        valid.forEach(function (p, i) {
-                            if (p.accuracy > 0 &amp;&amp; p.accuracy &lt;= 500) {
-                                L.circle([p.lat, p.lng], {
-                                    radius:      p.accuracy,
-                                    color:       '#3b82f6',
-                                    fillColor:   '#3b82f6',
-                                    fillOpacity: 0.1,
-                                    weight:      1,
-                                    opacity:     0.35,
-                                }).addTo(map);
-                            }
+                  /* ── Path polyline ── */
+                  var latlngs = valid.map(function (p) { return [p.lat, p.lng]; });
+                  L.polyline(latlngs, {
+                      color:     '#6366f1',
+                      weight:    3,
+                      opacity:   0.85,
+                      dashArray: '7 5',
+                  }).addTo(map);
 
-                            if (i > 0 &amp;&amp; i &lt; valid.length - 1) {
-                                var dot = L.circleMarker([p.lat, p.lng], {
-                                    radius:      5,
-                                    color:       '#6366f1',
-                                    fillColor:   '#c7d2fe',
-                                    fillOpacity: 1,
-                                    weight:      2,
-                                });
-                                var timeStr  = p.time  ? p.time.replace('T', ' ')          : '—';
-                                var speedStr = p.speed ? (p.speed * 3.6).toFixed(1) + ' km/h' : '0 km/h';
-                                var accStr   = p.accuracy ? p.accuracy.toFixed(1) + ' m'   : '—';
-                                dot.bindPopup(
-                                    '<b>Time:</b> '     + timeStr  + '<br>' +
-                                    '<b>Speed:</b> '    + speedStr + '<br>' +
-                                    '<b>Accuracy:</b> ' + accStr   +
-                                    (p.location_name ? '<br><b>Location:</b> ' + p.location_name : '')
-                                );
-                                dot.addTo(map);
-                            }
-                        });
+                  /* ── Accuracy circles + intermediate markers ── */
+                  valid.forEach(function (p, i) {
+                      if (p.accuracy > 0 && p.accuracy <= 500) {
+                          L.circle([p.lat, p.lng], {
+                              radius:      p.accuracy,
+                              color:       '#3b82f6',
+                              fillColor:   '#3b82f6',
+                              fillOpacity: 0.1,
+                              weight:      1,
+                              opacity:     0.35,
+                          }).addTo(map);
+                      }
 
-                        /* Start marker */
-                        var sp = valid[0];
-                        L.marker([sp.lat, sp.lng], {
-                            icon: L.divIcon({
-                                html: '<div style="width:18px;height:18px;background:#3b6d11;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25)"></div>',
-                                iconSize:   [18, 18],
-                                iconAnchor: [9, 9],
-                                className:  '',
-                            }),
-                        }).addTo(map).bindPopup(
-                            '<b>Start point</b><br>' + (sp.time || '') +
-                            (sp.location_name ? '<br>' + sp.location_name : '')
-                        );
+                      if (i > 0 && i < valid.length - 1) {
+                          var dot = L.circleMarker([p.lat, p.lng], {
+                              radius:      5,
+                              color:       '#6366f1',
+                              fillColor:   '#c7d2fe',
+                              fillOpacity: 1,
+                              weight:      2,
+                          });
+                          var timeStr  = p.time  ? p.time.replace('T', ' ') : '—';
+                          var speedStr = p.speed ? (p.speed * 3.6).toFixed(1) + ' km/h' : '0 km/h';
+                          var accStr   = p.accuracy ? p.accuracy.toFixed(1) + ' m' : '—';
+                          dot.bindPopup(
+                              '<b>Time:</b> '     + timeStr  + '<br>' +
+                              '<b>Speed:</b> '    + speedStr + '<br>' +
+                              '<b>Accuracy:</b> ' + accStr   +
+                              (p.location_name ? '<br><b>Location:</b> ' + p.location_name : '')
+                          );
+                          dot.addTo(map);
+                      }
+                  });
 
-                        /* End / current marker */
-                        var ep = valid[valid.length - 1];
-                        L.marker([ep.lat, ep.lng], {
-                            icon: L.divIcon({
-                                html: '<div style="width:22px;height:22px;background:#dc2626;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.3)"></div>',
-                                iconSize:   [22, 22],
-                                iconAnchor: [11, 22],
-                                className:  '',
-                            }),
-                        }).addTo(map).bindPopup(
-                            '<b>Current / last position</b><br>' +
-                            (ep.time || '') +
-                            (ep.location_name ? '<br>' + ep.location_name : '') +
-                            '<br>Accuracy: ' + (ep.accuracy ? ep.accuracy.toFixed(1) + ' m' : '—')
-                        ).openPopup();
+                  /* ── Start marker ── */
+                  var sp = valid[0];
+                  L.marker([sp.lat, sp.lng], {
+                      icon: L.divIcon({
+                          html: '<div style="width:18px;height:18px;background:#3b6d11;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25)"></div>',
+                          iconSize:   [18, 18],
+                          iconAnchor: [9, 9],
+                          className:  '',
+                      }),
+                  }).addTo(map).bindPopup(
+                      '<b>Start point</b><br>' + (sp.time || '') +
+                      (sp.location_name ? '<br>' + sp.location_name : '')
+                  );
 
-                        /* Fit bounds */
-                        if (latlngs.length > 1) {
-                            map.fitBounds(L.latLngBounds(latlngs), { padding: [50, 50] });
-                        } else {
-                            map.setView(latlngs[0], 16);
-                        }
-                    })();
-//]]>
-                </script>
+                  /* ── End / current marker ── */
+                  var ep = valid[valid.length - 1];
+                  L.marker([ep.lat, ep.lng], {
+                      icon: L.divIcon({
+                          html: '<div style="width:22px;height:22px;background:#dc2626;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.3)"></div>',
+                          iconSize:   [22, 22],
+                          iconAnchor: [11, 22],
+                          className:  '',
+                      }),
+                  }).addTo(map).bindPopup(
+                      '<b>Current / last position</b><br>' +
+                      (ep.time || '') +
+                      (ep.location_name ? '<br>' + ep.location_name : '') +
+                      '<br>Accuracy: ' + (ep.accuracy ? ep.accuracy.toFixed(1) + ' m' : '—')
+                  ).openPopup();
+
+                  /* ── Plan markers ── */
+                  if (plans && plans.length > 0) {
+                      plans.forEach(function (pl) {
+                          if (typeof pl.lat !== 'number' || typeof pl.lng !== 'number') return;
+                          var visited = !!pl.visited;
+                          var color   = visited ? '#3b6d11' : '#dc2626';
+                          var opacity = visited ? 0.55 : 0.45;
+                          var dot = L.circleMarker([pl.lat, pl.lng], {
+                              radius:      7,
+                              color:       color,
+                              fillColor:   color,
+                              fillOpacity: opacity,
+                              weight:      2,
+                          });
+                          dot.bindPopup(
+                              '<b>' + (pl.name || 'Planned location') + '</b><br>' +
+                              (visited ? '&#10003; Visited' : '&#8226; Not visited yet') +
+                              (pl.address ? '<br>' + pl.address : '')
+                          );
+                          dot.addTo(map);
+                      });
+                  }
+
+                  /* ── Fit bounds ── */
+                  var allLatLngs = latlngs.slice();
+                  if (plans) {
+                      plans.forEach(function (pl) {
+                          if (typeof pl.lat === 'number' && typeof pl.lng === 'number') {
+                              allLatLngs.push([pl.lat, pl.lng]);
+                          }
+                      });
+                  }
+
+                  if (allLatLngs.length > 1) {
+                      map.fitBounds(L.latLngBounds(allLatLngs), { padding: [50, 50] });
+                  } else {
+                      map.setView(latlngs[0], 16);
+                  }
+
+                  setTimeout(function () { map.invalidateSize(); }, 300);
+              })();
+              //]]>
+              </script>
+
+
             </body>
         </html>
     </template>

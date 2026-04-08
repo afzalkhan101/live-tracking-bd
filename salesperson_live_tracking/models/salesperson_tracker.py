@@ -43,6 +43,15 @@ class SalespersonTracker(models.Model):
     today_covered_count = fields.Integer(compute="_compute_today_visit_stats")
     today_visit_summary = fields.Text(compute="_compute_today_visit_stats")
 
+    # KPI fields
+    kpi_visit_completion_rate = fields.Float(
+        string="Visit Completion Rate (%)", compute="_compute_today_visit_stats", digits=(16, 2)
+    )
+
+    # Route deviation alert
+    route_deviation_alert = fields.Boolean(string="Route Deviation Alert", default=False)
+    last_alert_sent = fields.Datetime(string="Last Alert Sent")
+
     _sql_constraints = [
         ("salesperson_tracker_user_unique", "unique(user_id)", "A salesperson can only have one live tracker."),
     ]
@@ -123,13 +132,16 @@ class SalespersonTracker(models.Model):
             tracker.today_plan_count = 0
             tracker.today_covered_count = 0
             tracker.today_visit_summary = False
+            tracker.kpi_visit_completion_rate = 0.0
             if tracker.user_id:
                 grouped[tracker.user_id.id].append(tracker)
 
         if not grouped:
             return
 
-        plans = plan_model.search([("user_id", "in", list(grouped.keys())), ("visit_date", "=", today)], order="sequence, id")
+        plans = plan_model.search(
+            [("user_id", "in", list(grouped.keys())), ("visit_date", "=", today)], order="sequence, id"
+        )
         plans_by_user = defaultdict(lambda: plan_model)
         for plan in plans:
             plans_by_user[plan.user_id.id] |= plan
@@ -137,14 +149,16 @@ class SalespersonTracker(models.Model):
         for user_id, trackers in grouped.items():
             user_plans = plans_by_user[user_id]
             covered_count = len(user_plans.filtered("is_covered"))
+            total = len(user_plans)
+            completion_rate = (covered_count / total * 100.0) if total > 0 else 0.0
             summary = "\n".join(
-                "%s: %s" % (plan.location_name, plan.stay_duration_display)
-                for plan in user_plans
+                "%s: %s" % (plan.location_name, plan.stay_duration_display) for plan in user_plans
             )
             for tracker in trackers:
-                tracker.today_plan_count = len(user_plans)
+                tracker.today_plan_count = total
                 tracker.today_covered_count = covered_count
                 tracker.today_visit_summary = summary or False
+                tracker.kpi_visit_completion_rate = completion_rate
 
     def update_live_location(self, latitude, longitude, accuracy=None, speed=None, heading=None, source="browser"):
         self.ensure_one()
@@ -162,22 +176,63 @@ class SalespersonTracker(models.Model):
         }
         self.write(values)
         if self.partner_id:
-            self.partner_id.sudo().write({
-                "partner_latitude": latitude,
-                "partner_longitude": longitude,
-                "date_localization": fields.Date.context_today(self),
-            })
-        self.env["salesperson.location.log"].sudo().create({
-            "tracker_id": self.id,
-            "tracked_at": fields.Datetime.now(),
-            "latitude": latitude,
-            "longitude": longitude,
-            "accuracy": accuracy_value,
-            "speed": speed or 0.0,
-            "heading": heading or 0.0,
-            "source": source,
-            "location_name": location_name,
-        })
+            self.partner_id.sudo().write(
+                {
+                    "partner_latitude": latitude,
+                    "partner_longitude": longitude,
+                    "date_localization": fields.Date.context_today(self),
+                }
+            )
+        self.env["salesperson.location.log"].sudo().create(
+            {
+                "tracker_id": self.id,
+                "tracked_at": fields.Datetime.now(),
+                "latitude": latitude,
+                "longitude": longitude,
+                "accuracy": accuracy_value,
+                "speed": speed or 0.0,
+                "heading": heading or 0.0,
+                "source": source,
+                "location_name": location_name,
+            }
+        )
+        # Check for missed visits / route deviation
+        self._check_route_deviation(latitude, longitude)
+
+    def _check_route_deviation(self, latitude, longitude):
+        """Send alert if salesperson is deviating from assigned route."""
+        self.ensure_one()
+        today = fields.Date.context_today(self)
+        plans = self.env["salesperson.visit.plan"].sudo().search(
+            [("user_id", "=", self.user_id.id), ("visit_date", "=", today), ("is_covered", "=", False)]
+        )
+        if not plans:
+            return
+        from math import asin, cos, radians, sin, sqrt
+
+        def haversine(lat1, lon1, lat2, lon2):
+            R = 6371000.0
+            dlat = radians(lat2 - lat1)
+            dlon = radians(lon2 - lon1)
+            a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
+            return 2.0 * R * asin(sqrt(a))
+
+        # Find minimum distance to any unvisited plan
+        min_dist = min(haversine(latitude, longitude, p.latitude, p.longitude) for p in plans if p.latitude)
+        # If more than 2km from nearest unvisited location and last alert > 30min ago
+        now = fields.Datetime.now()
+        alert_threshold = now - timedelta(minutes=30)
+        if min_dist > 2000 and (not self.last_alert_sent or self.last_alert_sent < alert_threshold):
+            self.sudo().write({"route_deviation_alert": True, "last_alert_sent": now})
+            # Post message on tracker
+            self.message_post(
+                body=_(
+                    "⚠️ Route Deviation Alert: %s is %.0f meters away from nearest unvisited location."
+                )
+                % (self.user_id.name, min_dist),
+                subject=_("Route Deviation Alert"),
+                partner_ids=[self.env.ref("base.user_admin").partner_id.id],
+            )
 
     def _reverse_geocode_location(self, latitude, longitude):
         self.ensure_one()
@@ -218,7 +273,9 @@ class SalespersonTracker(models.Model):
             or address.get("hamlet")
         )
         area = self._clean_location_area(area)
-        city = address.get("city") or address.get("town") or address.get("municipality") or address.get("village")
+        city = (
+            address.get("city") or address.get("town") or address.get("municipality") or address.get("village")
+        )
         postcode = address.get("postcode")
         parts = []
         if area:
@@ -282,6 +339,27 @@ class SalespersonTracker(models.Model):
         }
         return action
 
+    def action_view_checkins(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Check-Ins"),
+            "res_model": "salesperson.checkin",
+            "view_mode": "list,form",
+            "domain": [("tracker_id", "=", self.id)],
+            "context": {"default_tracker_id": self.id},
+        }
+
+    def action_view_kpi(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("KPI Summary"),
+            "res_model": "salesperson.kpi",
+            "view_mode": "list,form",
+            "domain": [("user_id", "=", self.user_id.id)],
+        }
+
 
 class SalespersonLocationLog(models.Model):
     _name = "salesperson.location.log"
@@ -289,9 +367,15 @@ class SalespersonLocationLog(models.Model):
     _order = "tracked_at desc, id desc"
 
     tracker_id = fields.Many2one("salesperson.tracker", required=True, ondelete="cascade", index=True)
-    user_id = fields.Many2one("res.users", related="tracker_id.user_id", store=True, readonly=True, index=True)
-    partner_id = fields.Many2one("res.partner", related="tracker_id.partner_id", store=True, readonly=True, index=True)
-    company_id = fields.Many2one("res.company", related="tracker_id.company_id", store=True, readonly=True)
+    user_id = fields.Many2one(
+        "res.users", related="tracker_id.user_id", store=True, readonly=True, index=True
+    )
+    partner_id = fields.Many2one(
+        "res.partner", related="tracker_id.partner_id", store=True, readonly=True, index=True
+    )
+    company_id = fields.Many2one(
+        "res.company", related="tracker_id.company_id", store=True, readonly=True
+    )
     tracked_at = fields.Datetime(required=True, default=fields.Datetime.now, index=True)
     latitude = fields.Float(required=True, digits=(16, 7))
     longitude = fields.Float(required=True, digits=(16, 7))
