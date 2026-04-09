@@ -682,6 +682,8 @@
                             return res.json();
                         };
 
+                        /*- Js code for camera and check-in features -*/
+
                         const openBtn      = document.getElementById('openCameraBtn');
                         const video        = document.getElementById('selfieVideo');
                         const canvas       = document.getElementById('selfieCanvas');
@@ -703,72 +705,91 @@
                         const pvDownload   = document.getElementById('pvDownload');
                         const pvDelete     = document.getElementById('pvDelete');
 
-                        let stream = null;
-                        let facingMode = 'user';
-                        let photos = [];
+                        let stream       = null;
+                        let facingMode   = 'environment'; // default: back camera on mobile
+                        let photos       = [];
                         let viewingIndex = -1;
 
+                        /* ── Start Camera ── */
                         async function startCamera(facing) {
                             if (stream) stream.getTracks().forEach(t => t.stop());
                             try {
                                 stream = await navigator.mediaDevices.getUserMedia({
-                                    video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 960 } }
+                                    video: {
+                                        facingMode: { ideal: facing },
+                                        width:  { ideal: 1280 },
+                                        height: { ideal: 960 }
+                                    }
                                 });
                                 video.srcObject = stream;
-                                previewBox.style.display = 'block';
-                                openBtn.style.display = 'none';
-                                snapRow.style.display = 'none';
+                                video.style.display = 'block';         // ✅ video দেখাও
+                                previewBox.style.display = 'block';     // ✅ preview box দেখাও
+                                openBtn.style.display    = 'none';
+                                snapRow.style.display    = 'none';
                                 camGallery.style.display = 'none';
                                 photoViewer.style.display = 'none';
                                 camLabel.textContent = 'Tap the shutter button to take a photo';
                             } catch (e) {
-                                camLabel.textContent = 'Camera access denied or unavailable.';
+                                camLabel.textContent = 'Camera access denied or unavailable. Please allow camera permission.';
+                                console.error('Camera error:', e);
                             }
                         }
 
+                        /* ── Close Camera ── */
                         function closeCamera() {
-                            if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+                            if (stream) {
+                                stream.getTracks().forEach(t => t.stop());
+                                stream = null;
+                            }
+                            video.style.display      = 'none';         // ✅ video লুকাও
+                            video.srcObject          = null;
                             previewBox.style.display = 'none';
-                            openBtn.style.display = 'inline-flex';
-                            camLabel.textContent = 'Click to access your camera';
+                            openBtn.style.display    = 'inline-flex';
+                            camLabel.textContent     = 'Click to access your camera';
+                            snapRow.style.display    = 'none';
                             if (photos.length > 0) renderGallery();
                         }
 
+                        /* ── Render Gallery ── */
                         function renderGallery() {
                             camGallery.style.display = 'flex';
                             galleryCount.textContent = 'Saved photos (' + photos.length + ')';
-                            galleryGrid.innerHTML = '';
+                            galleryGrid.innerHTML    = '';
                             if (photos.length === 0) {
                                 galleryGrid.innerHTML = '<div class="gallery-empty">No photos yet</div>';
                                 return;
                             }
                             photos.forEach(function (p, i) {
                                 const img = document.createElement('img');
-                                img.src = p.dataUrl;
+                                img.src   = p.dataUrl;
                                 img.title = p.ts;
                                 img.addEventListener('click', function () { openViewer(i); });
                                 galleryGrid.appendChild(img);
                             });
                         }
 
+                        /* ── Open Photo Viewer ── */
                         function openViewer(idx) {
-                            viewingIndex = idx;
-                            viewerImg.src = photos[idx].dataUrl;
+                            viewingIndex             = idx;
+                            viewerImg.src            = photos[idx].dataUrl;
                             camGallery.style.display = 'none';
                             photoViewer.style.display = 'flex';
-                            openBtn.style.display = 'none';
+                            openBtn.style.display    = 'none';
                         }
 
-                        /* ── Event listeners ── */
-
+                        /* ── Event: Open Camera Button ── */
                         openBtn.addEventListener('click', () => startCamera(facingMode));
+
+                        /* ── Event: Close/Stop Camera ── */
                         stopBtn.addEventListener('click', closeCamera);
 
+                        /* ── Event: Flip Camera ── */
                         flipBtn.addEventListener('click', () => {
                             facingMode = facingMode === 'user' ? 'environment' : 'user';
                             startCamera(facingMode);
                         });
 
+                        /* ── Event: Take Photo (Shutter) ── */
                         captureBtn.addEventListener('click', () => {
                             if (!stream) return;
 
@@ -776,67 +797,89 @@
                             flashEl.classList.add('go');
                             setTimeout(() => flashEl.classList.remove('go'), 160);
 
-                            // Draw frame to canvas
+                            // Draw video frame onto canvas
                             canvas.width  = video.videoWidth  || 640;
                             canvas.height = video.videoHeight || 480;
                             const ctx = canvas.getContext('2d');
+
+                            // Mirror front camera
                             if (facingMode === 'user') {
                                 ctx.translate(canvas.width, 0);
                                 ctx.scale(-1, 1);
                             }
                             ctx.drawImage(video, 0, 0);
+
                             const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
 
-                            // Save photo
+                            // Save to photos array
                             photos.push({ dataUrl: dataUrl, ts: new Date().toLocaleTimeString() });
 
                             // Set download link
-                            downloadLink.href = dataUrl;
+                            downloadLink.href     = dataUrl;
                             downloadLink.download = 'photo_' + Date.now() + '.jpg';
 
-                            // Show snap confirmation for 2 seconds then hide
+                            // Show success bar briefly
                             snapRow.style.display = 'flex';
-                            camLabel.textContent = 'Photo saved! Take another or close camera.';
-                            setTimeout(() => { snapRow.style.display = 'none'; }, 2000);
+                            camLabel.textContent  = 'Photo saved! Take another or close camera.';
+                            setTimeout(() => {
+                                if (stream) snapRow.style.display = 'none'; // hide after 2s if camera still open
+                            }, 2000);
 
-                            // Update gallery in background (camera stays open)
+                            // Update gallery (hidden while camera is open)
                             renderGallery();
-                            // Hide gallery while camera is open
-                            camGallery.style.display = 'none';
+                            camGallery.style.display = 'none'; // keep hidden while camera is open
                         });
 
+                        /* ── Event: Download from snap row ── */
                         downloadLink.addEventListener('click', (e) => {
                             e.preventDefault();
-                            const a = document.createElement('a');
-                            a.href = downloadLink.href;
+                            const a    = document.createElement('a');
+                            a.href     = downloadLink.href;
                             a.download = downloadLink.download;
                             a.click();
                         });
 
+                        /* ── Event: Back from viewer to gallery ── */
                         pvBack.addEventListener('click', () => {
-                            photoViewer.style.display = 'none';
-                            camGallery.style.display = 'flex';
-                            if (!stream) openBtn.style.display = 'inline-flex';
-                        });
-
-                        pvDownload.addEventListener('click', () => {
-                            const a = document.createElement('a');
-                            a.href = photos[viewingIndex].dataUrl;
-                            a.download = 'photo_' + viewingIndex + '.jpg';
-                            a.click();
-                        });
-
-                        pvDelete.addEventListener('click', () => {
-                            photos.splice(viewingIndex, 1);
                             photoViewer.style.display = 'none';
                             renderGallery();
                             if (!stream) openBtn.style.display = 'inline-flex';
                         });
 
+                        /* ── Event: Download from viewer ── */
+                        pvDownload.addEventListener('click', () => {
+                            const a    = document.createElement('a');
+                            a.href     = photos[viewingIndex].dataUrl;
+                            a.download = 'photo_' + Date.now() + '.jpg';
+                            a.click();
+                        });
+
+                        /* ── Event: Delete photo from viewer ── */
+                        pvDelete.addEventListener('click', () => {
+                            photos.splice(viewingIndex, 1);
+                            photoViewer.style.display = 'none';
+                            if (photos.length > 0) {
+                                renderGallery();
+                            } else {
+                                camGallery.style.display = 'none';
+                            }
+                            if (!stream) openBtn.style.display = 'inline-flex';
+                        });
+
+                        /* ── Event: Clear all photos ── */
                         clearAllBtn.addEventListener('click', () => {
                             photos = [];
                             renderGallery();
                         });
+
+
+
+
+
+
+                          
+                          
+                        
 
                         /* ── Tracking logic ── */
                         const sendLocation = async (position) => {
