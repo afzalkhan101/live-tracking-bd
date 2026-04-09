@@ -414,19 +414,18 @@
                             </a>
 
                              <div class="btn btn-secondary" style="position: relative;">
-                                <button id="openCameraBtn" class="btn btn-info" type="button">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="12" cy="12" r="10"/>
-                                        <polygon points="10 8 14 12 10 16 10 8"/>
-                                    </svg>
-                                    Open Camera
-                                </button>
-                                <!-- Video Preview -->
-                                <video id="selfieVideo" autoplay="autoplay" playsinline="playsinline" style="width:150px; height:auto; display:none; margin-top:5px;"></video>
-                                <canvas id="selfieCanvas" style="display:none;"></canvas>
-                            </div>
+                                    <button id="openCameraBtn" class="btn btn-info" type="button">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"/>
+                                            <polygon points="10 8 14 12 10 16 10 8"/>
+                                        </svg>
+                                        Open Camera
+                                    </button>
+                                    <!-- Video Preview -->
+                                    <video id="selfieVideo" autoplay="autoplay" playsinline="playsinline" style="width:150px; height:auto; display:none; margin-top:5px;"></video>
+                                    <canvas id="selfieCanvas" style="display:none;"></canvas>
+                                </div>
                         </div>
-
                         <div id="checkinPanel" class="checkin-panel" style="display:none">
                           <div class="checkin-title">&#9989; Checked in</div>
                           <div style="font-size:12px;color:var(--green-600)">
