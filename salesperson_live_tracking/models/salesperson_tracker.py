@@ -12,7 +12,7 @@ class SalespersonTracker(models.Model):
     _name = "salesperson.tracker"
     _description = "Salesperson Live Tracker"
     _order = "last_seen desc, id desc"
-
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _MAX_PRECISE_LOCATION_ACCURACY_METERS = 200.0
 
     user_id = fields.Many2one("res.users", required=True, ondelete="cascade", index=True)
