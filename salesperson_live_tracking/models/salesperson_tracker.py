@@ -42,11 +42,16 @@ class SalespersonTracker(models.Model):
     today_plan_count = fields.Integer(compute="_compute_today_visit_stats")
     today_covered_count = fields.Integer(compute="_compute_today_visit_stats")
     today_visit_summary = fields.Text(compute="_compute_today_visit_stats")
+    # models/salesperson_tracker.py
 
     # KPI fields
     kpi_visit_completion_rate = fields.Float(
         string="Visit Completion Rate (%)", compute="_compute_today_visit_stats", digits=(16, 2)
     )
+
+    # ── Tracking Duration ──────────────────────────────────────────────────────
+    last_tracking_start = fields.Datetime(string="Tracking Started At")
+    last_tracking_duration = fields.Integer(string="Last Session Duration (sec)", default=0)
 
     # Route deviation alert
     route_deviation_alert = fields.Boolean(string="Route Deviation Alert", default=False)

@@ -101,11 +101,41 @@ class SalespersonTrackingController(http.Controller):
 
     @http.route("/salesperson_tracking/stop", type="http", auth="user", methods=["POST"], csrf=False)
     def salesperson_tracking_stop(self, **kwargs):
-        user = self._check_salesperson_access()
+        user    = self._check_salesperson_access()
+        payload = self._json_body()
+        aw = request.httprequest.data
+        print("################ Payload raw data:", aw)
+        print("################ Payload received for stop tracking:", payload)
         tracker = user.sudo()._ensure_salesperson_tracker()
-        tracker.sudo().write({"is_tracking": False})
-        return request.make_json_response({"ok": True, "status": tracker.tracking_status})
 
+        vals = {
+            "is_tracking":         False,
+            "last_tracking_start": False,
+        }
+
+        # ── Frontend থেকে duration নাও ──
+        try:
+            duration_seconds = int(payload.get("duration_seconds") or 0)
+            print("################ Duration from payload:", duration_seconds)
+        except (TypeError, ValueError):
+            duration_seconds = 0
+
+        # ── Fallback: backend নিজে calculate করুক ──
+        if duration_seconds <= 0 and tracker.last_tracking_start:
+            delta = fields.Datetime.now() - tracker.last_tracking_start
+            duration_seconds = int(delta.total_seconds())
+
+        # ── Sanity check + save ──
+        if 0 < duration_seconds < 86400:
+            vals["last_tracking_duration"] = duration_seconds
+
+        tracker.sudo().write(vals)
+
+        return request.make_json_response({
+            "ok":             True,
+            "status":         tracker.tracking_status,
+            "duration_saved": duration_seconds,
+        })
     # ── check-in ───────────────────────────────────────────────────────────────
 
     @http.route("/salesperson_tracking/checkin", type="http", auth="user", methods=["POST"], csrf=False)

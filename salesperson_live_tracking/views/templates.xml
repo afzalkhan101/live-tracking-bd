@@ -610,11 +610,18 @@
                                 clearInterval(state.timerId);
                                 state.timerId = null;
                             }
+
+                            const durationSeconds = state.trackingStart
+                                ? Math.floor((Date.now() - state.trackingStart) / 1000)
+                                : 0;
                             state.trackingStart = null;
+
                             el.takingTimeValue.textContent = '—';
                             el.startButton.disabled = false;
                             try {
-                                await postJson('/salesperson_tracking/stop', {});
+                                await postJson('/salesperson_tracking/stop', {
+                                    duration_seconds: durationSeconds,
+                                });
                             } catch (e) {
                                 setNotice('warning', 'Stop warning', ' ' + e.message);
                             }
@@ -622,6 +629,7 @@
                             setNotice('', 'Tracking stopped',
                                 ' This device is no longer sending live position updates.');
                         };
+
 
                         /* ── Event listeners ── */
                         el.startButton.addEventListener('click', () =>
