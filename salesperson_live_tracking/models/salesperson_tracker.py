@@ -209,6 +209,7 @@ class SalespersonTracker(models.Model):
         )
         if not plans:
             return
+
         from math import asin, cos, radians, sin, sqrt
 
         def haversine(lat1, lon1, lat2, lon2):
@@ -218,19 +219,21 @@ class SalespersonTracker(models.Model):
             a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
             return 2.0 * R * asin(sqrt(a))
 
-        # Find minimum distance to any unvisited plan
-        min_dist = min(haversine(latitude, longitude, p.latitude, p.longitude) for p in plans if p.latitude)
-        # If more than 2km from nearest unvisited location and last alert > 30min ago
+        # Only consider plans with valid coordinates
+        valid_plans = [p for p in plans if p.latitude and p.longitude]
+        if not valid_plans:
+            return  # No geocoded plan points — nothing to check against
+
+        min_dist = min(haversine(latitude, longitude, p.latitude, p.longitude) for p in valid_plans)
+
         now = fields.Datetime.now()
         alert_threshold = now - timedelta(minutes=30)
         if min_dist > 2000 and (not self.last_alert_sent or self.last_alert_sent < alert_threshold):
             self.sudo().write({"route_deviation_alert": True, "last_alert_sent": now})
-            # Post message on tracker
             self.message_post(
                 body=_(
                     "⚠️ Route Deviation Alert: %s is %.0f meters away from nearest unvisited location."
-                )
-                % (self.user_id.name, min_dist),
+                ) % (self.user_id.name, min_dist),
                 subject=_("Route Deviation Alert"),
                 partner_ids=[self.env.ref("base.user_admin").partner_id.id],
             )
