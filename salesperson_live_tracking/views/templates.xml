@@ -806,13 +806,12 @@
                         captureBtn.addEventListener('click', () => {
                             if (!stream) return;
 
-                            // Flash effect
                             flashEl.classList.add('go');
                             setTimeout(() => flashEl.classList.remove('go'), 160);
 
-                            // Draw video frame onto canvas
                             canvas.width  = video.videoWidth  || 640;
                             canvas.height = video.videoHeight || 480;
+
                             const ctx = canvas.getContext('2d');
 
                             // Mirror front camera
@@ -820,27 +819,49 @@
                                 ctx.translate(canvas.width, 0);
                                 ctx.scale(-1, 1);
                             }
+
                             ctx.drawImage(video, 0, 0);
 
                             const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
 
-                            // Save to photos array
-                            photos.push({ dataUrl: dataUrl, ts: new Date().toLocaleTimeString() });
+                            photos.push({ dataUrl, ts: new Date().toLocaleTimeString() });
 
-                            // Set download link
-                            downloadLink.href     = dataUrl;
+                            downloadLink.href = dataUrl;
                             downloadLink.download = 'photo_' + Date.now() + '.jpg';
 
-                            // Show success bar briefly
+                            // ✅ SEND TO ODOO (FIXED)
+                            fetch('/salesperson_tracking/save_photo', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    image_data: dataUrl,
+                                    filename: 'photo_' + Date.now() + '.jpg'
+                                })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                console.log("Odoo response:", data);
+
+                                if (data.success) {
+                                    camLabel.textContent = 'Photo saved in Odoo!';
+                                } else {
+                                    camLabel.textContent = data.message;
+                                }
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                camLabel.textContent = 'Upload failed';
+                            });
+
                             snapRow.style.display = 'flex';
-                            camLabel.textContent  = 'Photo saved! Take another or close camera.';
                             setTimeout(() => {
-                                if (stream) snapRow.style.display = 'none'; // hide after 2s if camera still open
+                                if (stream) snapRow.style.display = 'none';
                             }, 2000);
 
-                            // Update gallery (hidden while camera is open)
                             renderGallery();
-                            camGallery.style.display = 'none'; // keep hidden while camera is open
+                            camGallery.style.display = 'none';
                         });
 
                         /* ── Event: Download from snap row ── */

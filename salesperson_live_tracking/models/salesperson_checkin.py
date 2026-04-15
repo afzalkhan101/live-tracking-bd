@@ -33,14 +33,12 @@ class SalespersonCheckin(models.Model):
         tracking=True,
     )
 
-    # Selfie proof (Req #3)
     selfie_image = fields.Binary(string="Selfie Proof", attachment=True)
     selfie_filename = fields.Char(string="Selfie Filename")
     selfie_latitude = fields.Float(string="Selfie Latitude", digits=(16, 7))
     selfie_longitude = fields.Float(string="Selfie Longitude", digits=(16, 7))
     selfie_taken_at = fields.Datetime(string="Selfie Taken At")
 
-    # Activity notes (Req #9)
     notes = fields.Text(string="Activity Notes")
     meeting_outcome = fields.Selection(
         [
@@ -55,12 +53,10 @@ class SalespersonCheckin(models.Model):
     )
     customer_feedback = fields.Text(string="Customer Feedback")
 
-    # CRM Integration (Req #12)
     partner_id = fields.Many2one("res.partner", string="Customer / Partner")
     crm_lead_id = fields.Many2one("crm.lead", string="CRM Opportunity / Lead")
     sale_order_id = fields.Many2one("sale.order", string="Sale Order")
-
-    # Map URL
+    
     checkin_map_url = fields.Char(compute="_compute_map_urls")
     checkout_map_url = fields.Char(compute="_compute_map_urls")
 
