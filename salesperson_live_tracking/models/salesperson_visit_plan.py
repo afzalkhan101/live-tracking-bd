@@ -142,6 +142,7 @@ class SalespersonVisitPlan(models.Model):
 
     def action_submit(self):
         self.filtered(lambda r: r.state == 'draft').write({'state': 'submitted'})
+        self._push_to_dashboard()
 
     def action_approve(self):
         self.filtered(lambda r: r.state == 'submitted').write({'state': 'approved'})
@@ -169,26 +170,38 @@ class SalespersonVisitPlan(models.Model):
     def _push_to_dashboard(self):
         Dashboard = self.env["salesperson.tracker"]
         Line = self.env["sales.person.space.line"]
-
+        print("Line",Line)
         for rec in self:
             dashboard = Dashboard.search([
-                ("sales_person", "=", rec.user_id.name)
+                ("user_id", "=", rec.user_id.id)
             ], limit=1)
 
             if not dashboard:
                 dashboard = Dashboard.create({
+                    "user_id": rec.user_id.id,   
                     "sales_person": rec.user_id.name,
                     "manager": rec.user_id.parent_id.name if rec.user_id.parent_id else False,
+                    "visit_date": rec.visit_date,
+                    "state": rec.state,
+                    "expense_transport": rec.expense_transport,
+                    "expense_food": rec.expense_food,
+                    "expense_other": rec.expense_other,
                 })
+
+            
+            dashboard.partner_ids = [(6, 0, rec.partner_ids.ids)]
 
             for space_line in rec.space_line_ids:
                 existing_line = Line.search([
                     ("partner_id", "=", space_line.partner_id.id),
                     ("visit_date", "=", space_line.visit_date),
+                    ("salesperson_tracker_id", "=", dashboard.id),
                 ], limit=1)
 
+                print("############3",existing_line)
                 if not existing_line:
                     Line.create({
+                        "salesperson_tracker_id": dashboard.id,  
                         "plan_id": rec.id,
                         "partner_id": space_line.partner_id.id,
                         "visit_date": space_line.visit_date,
@@ -197,7 +210,6 @@ class SalespersonVisitPlan(models.Model):
                         "total_cost": space_line.total_cost,
                         "notes": space_line.notes or "",
                     })
-
   
     @api.model_create_multi
     def create(self, vals_list):
