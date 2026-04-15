@@ -100,21 +100,41 @@
                         <field name="date"/>
                     </div>
 
-                    <group>
-                        <group string="General Information">
-                            <field name="visit_date"/>
+
+                      <group string="Basic Informations">
+                        <group>
                             <field name="user_id"/>
-                            <field name="partner_ids"
-                                   widget="many2many_tags"
-                                   string="Sales Leader"
-                                   options="{'no_create_edit': True}"
-                                   placeholder="Select customers..."/>
+                            <field name="visit_date"/>
                         </group>
-                        <group string="Details">
-                            <field name="priority" widget="priority"/>
-                            <field name="manager_notes"/>
+                        <group>
+
+                            <field name="purpose"/>
+                            <field name="priority"/>
                         </group>
-                    </group>
+                
+                            <field name="partner_ids" widget="many2many_tags" string="Customers"/>
+
+                        </group>
+
+                        <group string="Location and coverage">
+                        
+                        <group>
+                            <field name="location_name" string="Location Name"/>
+                            <field name="latitude" string="Latitude"/>
+                        </group>
+        
+                        <group>
+                            <field name="radius_meters" string="Radius (meters)"/>
+                            <field name="longitude" string="Longitude"/>
+                        </group>
+
+                        </group>
+
+
+                        <group string="Check-in / check-out">
+
+                        </group>
+                        
 
                     <notebook>
                         <page string="Visit Lines">

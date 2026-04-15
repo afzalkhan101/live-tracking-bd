@@ -4,11 +4,12 @@
         <field name="name">salesperson.tracker.tree</field>
         <field name="model">salesperson.tracker</field>
         <field name="arch" type="xml">
-            <list string="Salesperson Tracking"
-                  decoration-success="tracking_status == 'live'"
-                  decoration-warning="tracking_status == 'idle'"
-                  decoration-muted="tracking_status == 'offline'"
-                  class="o_list_compact">
+         <list string="Salesperson Tracking"
+            decoration-success="state == 'done'"
+            decoration-primary="state == 'accepted'"
+            decoration-info="state == 'visited'"
+            decoration-danger="state == 'rejected'"
+            decoration-muted="tracking_status == 'offline'">
                 <field name="user_id"/>
                 <field name="sale_team_id" optional="show"/>
                 <field name="tracking_status"/>
@@ -89,17 +90,19 @@
 
                                     <!-- State Badge -->
                                     <span t-attf-class="badge rounded-pill
-                                        #{record.state.raw_value == 'planned'  and 'text-bg-primary'  or
-                                          record.state.raw_value == 'visited'  and 'text-bg-info'     or
-                                          record.state.raw_value == 'accepted' and 'text-bg-success'  or
-                                          record.state.raw_value == 'rejected' and 'text-bg-danger'   or
-                                          'text-bg-secondary'}"
-                                        style="font-size:11px;">
-                                        <t t-if="record.state.raw_value == 'planned'">&#128203; Planned</t>
-                                        <t t-elif="record.state.raw_value == 'visited'">&#10003; Visited</t>
-                                        <t t-elif="record.state.raw_value == 'accepted'">&#9989; Accepted</t>
-                                        <t t-elif="record.state.raw_value == 'rejected'">&#10060; Rejected</t>
-                                    </span>
+                                            #{record.state.raw_value == 'planned'  and 'text-bg-primary'   or
+                                            record.state.raw_value == 'accepted' and 'text-bg-success'   or
+                                            record.state.raw_value == 'rejected' and 'text-bg-danger'    or
+                                            record.state.raw_value == 'visited'  and 'text-bg-info'      or
+                                            record.state.raw_value == 'done'     and 'text-bg-dark'      or
+                                            'text-bg-secondary'}"
+                                            style="font-size:11px;">
+                                            <t t-if="record.state.raw_value == 'planned'">&#128203; Planned</t>
+                                            <t t-elif="record.state.raw_value == 'accepted'">&#9989; Accepted</t>
+                                            <t t-elif="record.state.raw_value == 'rejected'">&#10060; Rejected</t>
+                                            <t t-elif="record.state.raw_value == 'visited'">&#10003; Visited</t>
+                                            <t t-elif="record.state.raw_value == 'done'">&#127881; Done</t>
+                                        </span>
 
                                     <!-- Deviation Badge -->
                                     <span t-if="record.route_deviation_alert.raw_value"
@@ -201,31 +204,43 @@
         <field name="arch" type="xml">
             <form string="Salesperson Tracker">
                 <header>
-                    <button name="action_set_visited"
-                            string="Mark as Visited"
-                            type="object"
-                            class="btn-primary"
-                            invisible="state != 'planned' or is_manager != True"/>
+                    <!-- planned → accepted (manager only) -->
                     <button name="action_set_accepted"
                             string="Accept"
                             type="object"
                             class="btn-success"
-                            invisible="state != 'visited'"/>
+                            invisible="state != 'planned'"/>
+
+                    <!-- planned → rejected (manager only) -->
                     <button name="action_set_rejected"
                             string="Reject"
                             type="object"
                             class="btn-danger"
+                            invisible="state != 'planned'"/>
+
+                    <!-- accepted → visited -->
+                    <button name="action_set_visited"
+                            string="Mark as Visited"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'accepted'"/>
+
+                    <!-- visited → done -->
+                    <button name="action_set_done"
+                            string="Done"
+                            type="object"
+                            class="btn-success"
                             invisible="state != 'visited'"/>
+
+                    <!-- Reset — শুধু accepted বা visited থেকে -->
                     <button name="action_set_planned"
                             string="Reset to Planned"
                             type="object"
-                            invisible="state == 'planned'"/>
+                            invisible="state not in ('accepted', 'visited')"/>
+
+                    <!-- Statusbar — নতুন order -->
                     <field name="state" widget="statusbar"
-                           statusbar_visible="planned,visited,accepted,rejected"/>
-                    <button name="action_open_live_tracking_page" type="object" string="Open Live Page" class="btn-primary"/>
-                    <button name="action_view_history" type="object" string="Location History"/>
-                    <button name="action_view_today_visit_plan" type="object" string="Today's Visit Plan"/>
-                    <button name="action_open_moving_map_view" type="object" string="Moving Map"/>
+                        statusbar_visible="planned,accepted,visited,done"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">

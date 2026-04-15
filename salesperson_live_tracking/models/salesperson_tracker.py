@@ -29,10 +29,11 @@ class SalespersonTracker(models.Model):
         string="Visit Lines",
     )
     state = fields.Selection([
-        ('planned',  'Planned'),
-        ('visited',  'Visited'),
-        ('accepted', 'Accepted'),
-        ('rejected', 'Rejected'),
+    ('planned',  'Planned'),
+    ('accepted', 'Accepted'),
+    ('rejected', 'Rejected'),
+    ('visited',  'Visited'),
+    ('done',     'Done'),
     ], string='Stage', default='planned', tracking=True, index=True)
     user_id    = fields.Many2one("res.users",   required=True, ondelete="cascade", index=True)
     partner_id = fields.Many2one("res.partner", related="user_id.partner_id",  store=True, readonly=True)
@@ -75,16 +76,22 @@ class SalespersonTracker(models.Model):
 
 
     def action_set_planned(self):
-        self.write({'state': 'planned'})
-
-    def action_set_visited(self):
-        self.write({'state': 'visited'})
+        # শুধু accepted/visited থেকে reset হবে, rejected/done থেকে নয়
+        allowed = self.filtered(lambda r: r.state in ('accepted', 'visited'))
+        if allowed:
+            allowed.write({'state': 'planned'})
 
     def action_set_accepted(self):
-        self.write({'state': 'accepted'})
+        self.filtered(lambda r: r.state == 'planned').write({'state': 'accepted'})
 
     def action_set_rejected(self):
-        self.write({'state': 'rejected'})
+        self.filtered(lambda r: r.state == 'planned').write({'state': 'rejected'})
+
+    def action_set_visited(self):
+        self.filtered(lambda r: r.state == 'accepted').write({'state': 'visited'})
+
+    def action_set_done(self):
+        self.filtered(lambda r: r.state == 'visited').write({'state': 'done'})
 
     @api.depends("last_seen", "is_tracking")
     def _compute_tracking_status(self):

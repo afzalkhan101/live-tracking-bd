@@ -29,7 +29,7 @@ class SalespersonVisitPlan(models.Model):
         "plan_id",
         string="Space Lines"
     )
-    user_id = fields.Many2one("res.users", required=True,string="Salesperson" ,ondelete="cascade")
+    user_id = fields.Many2one("res.users", required=True,string="Sales person" ,ondelete="cascade")
     company_id = fields.Many2one("res.company", related="user_id.company_id", store=True)
     sale_team_id = fields.Many2one("crm.team", related="user_id.sale_team_id", store=True)
     visit_date = fields.Date(required=True,tracking=True, default=fields.Date.context_today)
@@ -66,6 +66,46 @@ class SalespersonVisitPlan(models.Model):
         ("rejected", "Rejected"),
         ("done", "Done")
     ], default="draft", tracking=True)
+    purpose = fields.Selection([
+        ('order', 'New Order'),
+        ('payment', 'Payment Collection'),
+        ('complaint', 'Complaint'),
+        ('followup', 'Follow Up'),
+        ('demo', 'Product Demo')
+    ], default='followup', tracking=True)
+
+    #Time related fields
+
+    checkin_time = fields.Datetime()
+    checkout_time = fields.Datetime()
+    stay_minutes = fields.Float(
+        compute='_compute_stay',
+        store=True
+    )
+
+    #Expense Related fields 
+
+
+    expense_transport = fields.Float()
+    expense_food = fields.Float()
+    expense_other = fields.Float()
+
+    total_expense = fields.Float(
+        compute='_compute_total_expense',
+        store=True
+    )
+
+    #other's fields 
+
+    next_followup_date = fields.Date()
+    is_covered = fields.Boolean(
+        compute="_compute_is_covered",
+        store=True
+    )
+
+
+
+
     html_note = fields.Html(string="HTML Note", sanitize=True)
     is_manager = fields.Boolean("res.users",
     related="user_id.is_manager",
@@ -108,6 +148,25 @@ class SalespersonVisitPlan(models.Model):
                         "total_cost": space_line.total_cost,
                         "notes": space_line.notes or "",
                     })
+    
+    @api.depends('checkin_time', 'checkout_time')
+    def _compute_stay(self):
+        for rec in self:
+            if rec.checkin_time and rec.checkout_time:
+                diff = rec.checkout_time - rec.checkin_time
+                rec.stay_minutes = diff.total_seconds() / 60
+            else:
+                rec.stay_minutes = 0
+
+    
+    @api.depends('expense_transport', 'expense_food', 'expense_other')
+    def _compute_total_expense(self):
+        for rec in self:
+            rec.total_expense = (
+                rec.expense_transport +
+                rec.expense_food +
+                rec.expense_other
+            )
 
 
     def action_submit(self):
@@ -145,36 +204,24 @@ class SalespersonVisitPlan(models.Model):
                         next_seq = 1
                 vals["name"] = f"{today_str}-{str(next_seq).zfill(5)}"
         return super().create(vals_list)
-
+    
 
 
 class AddSpaceForSalespersonLine(models.Model):
-    _name = "add.space.for.salesperson.line"
-    _description = "Space Line for Salesperson Visit Plan"
+    _name = 'add.space.for.salesperson.line'
+    _description = 'Visit Line'
+    _order = 'sequence,id'
 
-    plan_id = fields.Many2one(
-        "salesperson.visit.plan",
-        string="Visit Plan",
-        required=True,
-        ondelete="cascade"
-    )
-    partner_id = fields.Many2one(
-        "res.partner",
-        string="Customer",
-        required=True
-    )
-    visit_date = fields.Date(
-        string="Visit Date",
-        required=True
-    )
+    plan_id = fields.Many2one('salesperson.visit.plan', required=True, ondelete='cascade')
     sequence = fields.Integer(default=10)
-    from_location = fields.Char(string="From")
-    to_location = fields.Char(string="To")
-    total_cost = fields.Char(string="Total Cost")
-    notes = fields.Text(string="Notes")
 
-    state = fields.Selection(
-        related="plan_id.state",
-        string="Status",
-        store=True
-    )
+    partner_id = fields.Many2one('res.partner', required=True)
+    visit_date = fields.Date(required=True)
+
+    from_location = fields.Char()
+    to_location = fields.Char()
+
+    total_cost = fields.Float()
+    notes = fields.Text()
+
+    status = fields.Selection(related='plan_id.state', store=True)
