@@ -13,11 +13,13 @@ def _haversine_distance_meters(lat1, lon1, lat2, lon2):
     return 2.0 * radius * asin(sqrt(a))
 
 
+
 class SalespersonVisitPlan(models.Model):
     _name = "salesperson.visit.plan"
     _description = "Salesperson Planned Visit"
     _order = "visit_date desc, sequence, id"
     _inherit = ['mail.thread', 'mail.activity.mixin']
+
 
     name = fields.Char(default="New", copy=False, tracking=True)
     date = fields.Date(default=fields.Date.today)
@@ -94,7 +96,6 @@ class SalespersonVisitPlan(models.Model):
         store=False
     )
 
- 
     state = fields.Selection([
         ("draft", "Draft"),
         ("submitted", "Submitted"),
@@ -112,7 +113,6 @@ class SalespersonVisitPlan(models.Model):
         string="Space Lines"
     )
 
-   
     @api.depends('checkin_time', 'checkout_time')
     def _compute_stay(self):
         for rec in self:
@@ -168,16 +168,21 @@ class SalespersonVisitPlan(models.Model):
 
 
     def _push_to_dashboard(self):
-        Dashboard = self.env["salesperson.tracker"]
+
+        salesperson_tracker = self.env["salesperson.tracker"]
         Line = self.env["sales.person.space.line"]
-        print("Line",Line)
+
+    
+
         for rec in self:
-            dashboard = Dashboard.search([
+            tracker = salesperson_tracker.search([
                 ("user_id", "=", rec.user_id.id)
             ], limit=1)
 
-            if not dashboard:
-                dashboard = Dashboard.create({
+            print("#########",tracker)
+
+            if not tracker:
+                tracker = tracker.create({
                     "user_id": rec.user_id.id,   
                     "sales_person": rec.user_id.name,
                     "manager": rec.user_id.parent_id.name if rec.user_id.parent_id else False,
@@ -189,19 +194,18 @@ class SalespersonVisitPlan(models.Model):
                 })
 
             
-            dashboard.partner_ids = [(6, 0, rec.partner_ids.ids)]
+            tracker.partner_ids = [(6, 0, rec.partner_ids.ids)]
 
             for space_line in rec.space_line_ids:
                 existing_line = Line.search([
                     ("partner_id", "=", space_line.partner_id.id),
                     ("visit_date", "=", space_line.visit_date),
-                    ("salesperson_tracker_id", "=", dashboard.id),
+                    ("salesperson_tracker_id", "=", tracker.id),
                 ], limit=1)
 
-                print("############3",existing_line)
                 if not existing_line:
                     Line.create({
-                        "salesperson_tracker_id": dashboard.id,  
+                        "salesperson_tracker_id": tracker.id,  
                         "plan_id": rec.id,
                         "partner_id": space_line.partner_id.id,
                         "visit_date": space_line.visit_date,
