@@ -211,44 +211,44 @@ class SalespersonTracker(models.Model):
         for tracker in self:
             tracker.history_count = mapped.get(tracker.id, 0)
 
-    # @api.depends("user_id")
-    # def _compute_today_visit_stats(self):
-    #     plan_model = self.env["salesperson.visit.plan"]
-    #     today = fields.Date.context_today(self)
-    #     grouped = defaultdict(list)
+    @api.depends("user_id")
+    def _compute_today_visit_stats(self):
+        plan_model = self.env["salesperson.visit.plan"]
+        today = fields.Date.context_today(self)
+        grouped = defaultdict(list)
 
-    #     for tracker in self:
-    #         tracker.today_plan_count = 0
-    #         tracker.today_covered_count = 0
-    #         tracker.today_visit_summary = False
-    #         tracker.kpi_visit_completion_rate = 0.0
-    #         if tracker.user_id:
-    #             grouped[tracker.user_id.id].append(tracker)
+        for tracker in self:
+            tracker.today_plan_count = 0
+            tracker.today_covered_count = 0
+            tracker.today_visit_summary = False
+            tracker.kpi_visit_completion_rate = 0.0
+            if tracker.user_id:
+                grouped[tracker.user_id.id].append(tracker)
 
-    #     if not grouped:
-    #         return
+        if not grouped:
+            return
 
-    #     plans = plan_model.search(
-    #         [("user_id", "in", list(grouped.keys())), ("visit_date", "=", today)],
-    #         order="sequence, id",
-    #     )
-    #     plans_by_user = defaultdict(lambda: plan_model)
-    #     for plan in plans:
-    #         plans_by_user[plan.user_id.id] |= plan
+        plans = plan_model.search(
+            [("user_id", "in", list(grouped.keys())), ("visit_date", "=", today)],
+            order="sequence, id",
+        )
+        plans_by_user = defaultdict(lambda: plan_model)
+        for plan in plans:
+            plans_by_user[plan.user_id.id] |= plan
 
-    #     for user_id, trackers in grouped.items():
-    #         user_plans     = plans_by_user[user_id]
-    #         covered_count  = len(user_plans.filtered("is_covered"))
-    #         total          = len(user_plans)
-    #         completion_rate = (covered_count / total * 100.0) if total else 0.0
-    #         summary = "\n".join(
-    #             "%s: %s" % (p.location_name, p.stay_duration_display) for p in user_plans
-    #         )
-    #         for tracker in trackers:
-    #             tracker.today_plan_count          = total
-    #             tracker.today_covered_count       = covered_count
-    #             tracker.today_visit_summary       = summary or False
-    #             tracker.kpi_visit_completion_rate = completion_rate
+        for user_id, trackers in grouped.items():
+            user_plans     = plans_by_user[user_id]
+            covered_count  = len(user_plans.filtered("is_covered"))
+            total          = len(user_plans)
+            completion_rate = (covered_count / total * 100.0) if total else 0.0
+            summary = "\n".join(
+                "%s: %s" % (p.location_name, p.stay_duration_display) for p in user_plans
+            )
+            for tracker in trackers:
+                tracker.today_plan_count          = total
+                tracker.today_covered_count       = covered_count
+                tracker.today_visit_summary       = summary or False
+                tracker.kpi_visit_completion_rate = completion_rate
                 
     def update_live_location(
         self, latitude, longitude,

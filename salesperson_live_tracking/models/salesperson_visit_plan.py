@@ -4,7 +4,6 @@ from math import asin, cos, radians, sin, sqrt
 import pytz
 from odoo import api, fields, models
 
-
 def _haversine_distance_meters(lat1, lon1, lat2, lon2):
     radius = 6371000.0
     dlat = radians(lat2 - lat1)
@@ -113,6 +112,21 @@ class SalespersonVisitPlan(models.Model):
         string="Space Lines"
     )
 
+
+    stay_duration_display = fields.Char(
+        compute="_compute_stay_duration_display",
+        store=False
+    )
+
+    def _compute_stay_duration_display(self):
+        for rec in self:
+            if rec.checkin_time and rec.checkout_time:
+                diff = rec.checkout_time - rec.checkin_time
+                minutes = diff.total_seconds() / 60
+                rec.stay_duration_display = f"{int(minutes)} min"
+            else:
+                rec.stay_duration_display = "0 min"
+
     @api.depends('checkin_time', 'checkout_time')
     def _compute_stay(self):
         for rec in self:
@@ -141,6 +155,7 @@ class SalespersonVisitPlan(models.Model):
             )
 
     def action_submit(self):
+        
         self.filtered(lambda r: r.state == 'draft').write({'state': 'submitted'})
         self._push_to_dashboard()
 
@@ -171,40 +186,30 @@ class SalespersonVisitPlan(models.Model):
 
         salesperson_tracker = self.env["salesperson.tracker"]
         Line = self.env["sales.person.space.line"]
-
-    
-
         for rec in self:
             tracker = salesperson_tracker.search([
                 ("user_id", "=", rec.user_id.id)
             ], limit=1)
+            tracker = tracker.create({
+                "user_id": rec.user_id.id,   
+                "sales_person": rec.user_id.name,
+                "manager": rec.user_id.parent_id.name if rec.user_id.parent_id else False,
+                "visit_date": rec.visit_date,
+                "location_name":rec.location_name,
 
-            print("#########",tracker)
+                ##transport Related Cost.
 
-            if not tracker:
-                tracker = tracker.create({
-                    "user_id": rec.user_id.id,   
-                    "sales_person": rec.user_id.name,
-                    "manager": rec.user_id.parent_id.name if rec.user_id.parent_id else False,
-                    "visit_date": rec.visit_date,
-                    "state": rec.state,
-                    "expense_transport": rec.expense_transport,
-                    "expense_food": rec.expense_food,
-                    "expense_other": rec.expense_other,
-                })
+                "expense_transport": rec.expense_transport,
+                "expense_food": rec.expense_food,
+                "expense_other": rec.expense_other,
 
-            
+                "checkin_time": rec.checkin_time,
+                "checkout_time": rec.checkout_time,
+            })
+
             tracker.partner_ids = [(6, 0, rec.partner_ids.ids)]
-
             for space_line in rec.space_line_ids:
-                existing_line = Line.search([
-                    ("partner_id", "=", space_line.partner_id.id),
-                    ("visit_date", "=", space_line.visit_date),
-                    ("salesperson_tracker_id", "=", tracker.id),
-                ], limit=1)
-
-                if not existing_line:
-                    Line.create({
+                Line.create({
                         "salesperson_tracker_id": tracker.id,  
                         "plan_id": rec.id,
                         "partner_id": space_line.partner_id.id,
@@ -213,7 +218,7 @@ class SalespersonVisitPlan(models.Model):
                         "to_location": space_line.to_location,
                         "total_cost": space_line.total_cost,
                         "notes": space_line.notes or "",
-                    })
+                })
   
     @api.model_create_multi
     def create(self, vals_list):
@@ -239,14 +244,10 @@ class AddSpaceForSalespersonLine(models.Model):
 
     plan_id = fields.Many2one('salesperson.visit.plan', required=True, ondelete='cascade')
     sequence = fields.Integer(default=10)
-
     partner_id = fields.Many2one('res.partner', required=True)
     visit_date = fields.Date(required=True)
-
     from_location = fields.Char()
     to_location = fields.Char()
-
     total_cost = fields.Float()
     notes = fields.Text()
-
     status = fields.Selection(related='plan_id.state', store=True)

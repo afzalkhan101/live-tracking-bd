@@ -4,16 +4,10 @@ import json
 from odoo import http
 from odoo.http import request
 
-
-@http.route(
-    '/salesperson_tracking/save_photo',
-    type='json',
-    auth='user',
-    methods=['POST'],
-    csrf=False,
-)
+@http.route('/salesperson_tracking/save_photo',type='json',auth='user',methods=['POST'],csrf=False,)
 
 def save_photo(self, image_data='', filename=None, **kwargs):
+    
     try:
         if not image_data:
             return {'success': False, 'message': 'No image data received'}
@@ -28,6 +22,8 @@ def save_photo(self, image_data='', filename=None, **kwargs):
         tracker = request.env['salesperson.tracker'].sudo().search(
             [('user_id', '=', request.env.uid)], limit=1
         )
+
+        print("################",tracker)
 
         if not tracker:
             return {'success': False, 'message': 'Tracker record not found for this user'}
