@@ -4,6 +4,7 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 import requests
 from requests.exceptions import RequestException
+from markupsafe import Markup
 
 class SalespersonTracker(models.Model):
     _name = "salesperson.tracker"
@@ -65,7 +66,13 @@ class SalespersonTracker(models.Model):
     is_manager = fields.Boolean("res.users",
     related="user_id.is_manager",
     store=False
-   )
+     )
+    is_salesperson = fields.Boolean(
+    string="Is Salesperson",
+    related="user_id.is_salesperson",
+    store=False
+    )
+    
 
     last_tracking_start    = fields.Datetime(string="Tracking Started At")
     last_tracking_duration = fields.Integer(string="Last Session Duration (sec)", default=0)
@@ -129,7 +136,19 @@ class SalespersonTracker(models.Model):
         self.filtered(lambda r: r.state == 'planned').write({'state': 'accepted'})
 
     def action_set_rejected(self):
-        self.filtered(lambda r: r.state == 'planned').write({'state': 'rejected'})
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Reject Application',
+            'res_model': 'reject.reason.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_tracker_id': self.id,
+                'dialog_size': 'medium',
+            }
+        }
+
 
     def action_set_visited(self):
         self.filtered(lambda r: r.state == 'accepted').write({'state': 'visited'})
@@ -526,3 +545,63 @@ class SalespersonLocationLog(models.Model):
                 )
             else:
                 log.openstreetmap_url = False
+
+
+
+class RejectReasonWizard(models.TransientModel):
+    _name = "reject.reason.wizard"
+    _description = "Reject Reason Wizard"
+
+    tracker_id = fields.Many2one("salesperson.tracker", required=True)
+    reason = fields.Text(string="Reject Reason", required=True)
+
+    def action_confirm_reject(self):
+        self.ensure_one()
+
+        self.tracker_id.write({"state": "rejected"})
+
+        reason = self.reason
+        rejected_by = self.env.user.name
+
+        body = (
+        '<div style="border:1px solid #F7C1C1; border-radius:8px; overflow:hidden;'
+        ' max-width:720px; font-family:sans-serif;">'
+            '<div style="background:#FCEBEB; border-bottom:1px solid #F7C1C1;'
+            ' padding:10px 16px; display:flex; align-items:center; gap:10px;">'
+                '<div style="width:20px; height:20px; background:#A32D2D; border-radius:50%;'
+                ' display:flex; align-items:center; justify-content:center; flex-shrink:0;">'
+                    '<span style="color:#fff; font-size:13px; font-weight:700;">&#x2715;</span>'
+                '</div>'
+                '<span style="font-size:13px; font-weight:600; color:#791F1F;">'
+                    'Application Rejected'
+                '</span>'
+            '</div>'
+            '<div style="padding:12px 16px; background:#fff8f8;">'
+                '<p style="margin:0 0 4px; font-size:11px; font-weight:600;'
+                ' color:#A32D2D; text-transform:uppercase; letter-spacing:0.5px;">Reason</p>'
+                '<p style="margin:0; font-size:13px; color:#333; line-height:1.7;">'
+                + reason +
+                '</p>'
+            '</div>'
+            '<div style="padding:8px 16px; background:#fff; border-top:1px solid #F7C1C1;">'
+                '<p style="margin:0; font-size:11px; color:#999;">'
+                    'Rejected by <strong style="color:#555;">'
+                + rejected_by +
+                    '</strong>'
+                '</p>'
+            '</div>'
+        '</div>'
+       )
+
+        self.tracker_id.message_post(
+            body=Markup(body),
+            subtype_xmlid="mail.mt_note",
+        )
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'salesperson.tracker',
+            'res_id': self.tracker_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }

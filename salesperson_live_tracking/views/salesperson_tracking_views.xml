@@ -204,26 +204,24 @@
         <field name="arch" type="xml">
             <form string="Salesperson Tracker">
                 <header>
-                    <!-- planned → accepted (manager only) -->
+
                     <button name="action_set_accepted"
                             string="Accept"
                             type="object"
                             class="btn-success"
-                            invisible="state != 'planned'"/>
+                            invisible="state != 'planned' or is_salesperson"/>
 
-                    <!-- planned → rejected (manager only) -->
                     <button name="action_set_rejected"
                             string="Reject"
                             type="object"
                             class="btn-danger"
-                            invisible="state != 'planned'"/>
+                            invisible="state != 'planned' or is_salesperson"/>
 
-                    <!-- accepted → visited -->
                     <button name="action_set_visited"
                             string="Mark as Visited"
                             type="object"
                             class="btn-primary"
-                            invisible="state != 'accepted'"/>
+                            invisible="state != 'accepted' or is_manager"/>
 
                     <!-- visited → done -->
                     <button name="action_set_done"
@@ -232,13 +230,11 @@
                             class="btn-success"
                             invisible="state != 'visited'"/>
 
-                    <!-- Reset — শুধু accepted বা visited থেকে -->
                     <button name="action_set_planned"
                             string="Reset to Planned"
                             type="object"
                             invisible="state not in ('accepted', 'visited')"/>
 
-                    <!-- Statusbar — নতুন order -->
                     <field name="state" widget="statusbar"
                         statusbar_visible="planned,accepted,visited,done"/>
                 </header>
@@ -382,6 +378,26 @@
                 <field name="source" optional="show"/>
                 <field name="openstreetmap_url" widget="url" string="Map"/>
             </list>
+        </field>
+    </record>
+
+
+    <record id="view_reject_reason_wizard_form" model="ir.ui.view">
+        <field name="name">reject.reason.wizard.form</field>
+        <field name="model">reject.reason.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Reject Reason">
+                <group>
+                    <field name="reason"/>
+                </group>
+                <footer>
+                    <button name="action_confirm_reject"
+                            string="Confirm Reject"
+                            type="object"
+                            class="btn-danger"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
         </field>
     </record>
 
