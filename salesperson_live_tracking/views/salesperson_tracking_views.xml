@@ -326,10 +326,6 @@
                             </group>
                     </group>
 
-                    <group string="Tracking Related informations">
-                         <field name="last_tracking_duration"/>
-                    </group>
-
 
                     <notebook>
                         <page string="Travel Lines">

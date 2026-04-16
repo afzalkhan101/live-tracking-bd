@@ -72,21 +72,17 @@ class SalespersonTracker(models.Model):
     related="user_id.is_salesperson",
     store=False
     )
-    
 
     last_tracking_start    = fields.Datetime(string="Tracking Started At")
     last_tracking_duration = fields.Integer(string="Last Session Duration (sec)", default=0)
     route_deviation_alert  = fields.Boolean(string="Route Deviation Alert", default=False)
     last_alert_sent        = fields.Datetime(string="Last Alert Sent")
-
-
     priority = fields.Selection([
         ("0", "Normal"),
         ("1", "High"),
         ("2", "Urgent")
     ], default="0")
     coverage_color = fields.Integer(compute="_compute_coverage_color")
-   
     purpose = fields.Selection([
         ('order', 'New Order'),
         ('payment', 'Payment Collection'),
@@ -94,9 +90,6 @@ class SalespersonTracker(models.Model):
         ('followup', 'Follow Up'),
         ('demo', 'Product Demo')
     ], default='followup', tracking=True)
-
-   
-
     checkin_time = fields.Datetime()
     checkout_time = fields.Datetime()
     stay_minutes = fields.Float(
@@ -105,16 +98,13 @@ class SalespersonTracker(models.Model):
     )
     radius_meters = fields.Float(default=100.0)
     visit_date = fields.Date(required=True,tracking=True, default=fields.Date.context_today)
-    
     expense_transport = fields.Float()
     expense_food = fields.Float()
     expense_other = fields.Float()
-
     total_expense = fields.Float(
         compute='_compute_total_expense',
         store=True
     )
-
 
     @api.depends('expense_transport', 'expense_food', 'expense_other')
     def _compute_total_expense(self):
@@ -124,12 +114,12 @@ class SalespersonTracker(models.Model):
                 rec.expense_food +
                 rec.expense_other
             )
+    
     note = fields.Html(
     string="Internal Note",
     sanitize=True,
     tracking=True
     )
-
 
     def action_set_planned(self):
 
@@ -184,6 +174,7 @@ class SalespersonTracker(models.Model):
                 rec.stay_minutes = diff.total_seconds() / 60
             else:
                 rec.stay_minutes = 0
+
     def _search_tracking_status(self, operator, value):
         now = fields.Datetime.now()
         live_cutoff    = fields.Datetime.to_string(now - timedelta(minutes=2))
@@ -210,6 +201,7 @@ class SalespersonTracker(models.Model):
         if operator != "=" or value not in mapping:
             return []
         return mapping[value]
+    
 
     @api.depends("partner_id.partner_latitude", "partner_id.partner_longitude")
     def _compute_map_links(self):

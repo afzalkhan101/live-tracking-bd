@@ -197,7 +197,6 @@
         </field>
     </record>
 
-    <!-- ================= FORM VIEW ================= -->
     <record id="view_salesperson_visit_plan_form" model="ir.ui.view">
         <field name="name">salesperson.visit.plan.form</field>
         <field name="model">salesperson.visit.plan</field>
@@ -219,22 +218,66 @@
                 </header>
 
                 <sheet>
-                    <group>
-                        <field name="name"/>
-                        <field name="visit_date"/>
-                        <field name="user_id"/>
-                        <field name="purpose"/>
-                        <field name="priority"/>
-                        <field name="partner_ids" widget="many2many_tags"/>
+                     <group string="Basic Informations">
+                        <group>
+                            <field name="user_id"/>
+                            <field name="visit_date"/>
+                        </group>
+                        <group>
+
+                            <field name="purpose"/>
+                            <field name="priority"/>
+                        </group>
+                
+                            <field name="partner_ids" widget="many2many_tags" string="Customers"/>
+
+                        </group>
+
+                        <group string="Location and coverage">
+                        
+                        <group>
+                            <field name="location_name" string="Location Name"/>
+                            <field name="latitude" string="Latitude"/>
+                        </group>
+        
+                        <group>
+                            <field name="radius_meters" string="Radius (meters)"/>
+                            <field name="longitude" string="Longitude"/>
+                        </group>
+
+                        </group>
+
+
+                    <group string="Check-in / Check-out">
+                        <group>
+                            <field name="checkin_time"/>
+                            <field name="checkout_time"/>
+                        </group>
+
+                        <group>
+                            <field name="stay_minutes" readonly="1"/>
+                        </group>
                     </group>
+
+                    <group string="Expenses">
+                            <group>
+                                <field name="expense_transport" string="Transport Cost"/>
+                                <field name="expense_food" string="Food Cost"/>
+                                <field name="expense_other" string="Other Cost"/>
+                            </group>
+
+                            <group>
+                                <field name="total_expense" string="Total" readonly="1"/>
+                            </group>
+                    </group>
+
 
                     <notebook>
                         <page string="Travel Lines">
                             <field name="space_line_ids">
                                 <list editable="bottom">
-                                    <field name="sequence"/>
                                     <field name="visit_date"/>
-                                    <field name="partner_id" widget="many2many_tags"/>
+                                    <field name="partner_id"/>
                                     <field name="from_location"/>
                                     <field name="to_location"/>
                                     <field name="total_cost"/>

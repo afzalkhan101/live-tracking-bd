@@ -11,8 +11,6 @@ def _haversine_distance_meters(lat1, lon1, lat2, lon2):
     a = sin(dlat / 2.0) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2.0) ** 2
     return 2.0 * radius * asin(sqrt(a))
 
-
-
 class SalespersonVisitPlan(models.Model):
     _name = "salesperson.visit.plan"
     _description = "Salesperson Planned Visit"
@@ -45,9 +43,8 @@ class SalespersonVisitPlan(models.Model):
     latitude = fields.Float(store=True, digits=(16, 7))
     longitude = fields.Float(store=True, digits=(16, 7))
     radius_meters = fields.Float(default=100.0)
-
     openstreetmap_url = fields.Char()
-
+    
     checkin_time = fields.Datetime()
     checkout_time = fields.Datetime()
 
@@ -190,6 +187,7 @@ class SalespersonVisitPlan(models.Model):
             tracker = salesperson_tracker.search([
                 ("user_id", "=", rec.user_id.id)
             ], limit=1)
+
             tracker = tracker.create({
                 "user_id": rec.user_id.id,   
                 "sales_person": rec.user_id.name,
