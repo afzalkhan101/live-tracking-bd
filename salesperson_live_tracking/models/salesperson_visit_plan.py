@@ -196,9 +196,7 @@ class SalespersonVisitPlan(models.Model):
                 "manager": rec.user_id.parent_id.name if rec.user_id.parent_id else False,
                 "visit_date": rec.visit_date,
                 "location_name":rec.location_name,
-
-                ##transport Related Cost.
-
+                "state": 'accepted',
                 "expense_transport": rec.expense_transport,
                 "expense_food": rec.expense_food,
                 "expense_other": rec.expense_other,

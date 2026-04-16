@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_salesperson_visit_plan_tree" model="ir.ui.view">
-        <field name="name">salesperson.visit.plan.tree</field>
+    <record id="view_salesperson_visit_plan_list" model="ir.ui.view">
+        <field name="name">salesperson.visit.plan.list</field>
         <field name="model">salesperson.visit.plan</field>
         <field name="arch" type="xml">
             <list string="Planned Visits"
                   decoration-success="is_covered"
                   decoration-danger="not is_covered"
                   class="o_list_compact">
-                <field name="name"/>
-                <field name="sequence" widget="handle"/>
+                <field name="name" width="200"/>
+                <field name="sequence" widget="handle" width="200"/>
                 <field name="visit_date" width="200"/>
                 <field name="user_id" string="SalesPerson Leader" width="200"/>
                 <field name="sale_team_id" optional="show" width="200"/>
-                <field name="is_covered" column_invisible="1"/>
+                <field name="is_covered" column_invisible="1" width="200"/>
             </list>
         </field>
     </record>
-    
+
     <record id="view_users_form_inherit_role" model="ir.ui.view">
         <field name="name">res.users.form.inherit.role</field>
         <field name="model">res.users</field>
@@ -32,135 +32,214 @@
         </field>
     </record>
 
+    <record id="view_salesperson_visit_plan_kanban" model="ir.ui.view">
+        <field name="name">salesperson.visit.plan.kanban</field>
+        <field name="model">salesperson.visit.plan</field>
+        <field name="arch" type="xml">
+
+            <kanban class="o_kanban_mobile" default_group_by="state">
+                <field name="name"/>
+                <field name="state"/>
+                <field name="visit_date"/>
+                <field name="user_id"/>
+                <field name="sale_team_id"/>
+                <field name="purpose"/>
+                <field name="priority"/>
+                <field name="partner_ids" widget="many2many_tags"/>
+                <field name="is_covered"/>
+                <field name="checkin_time"/>
+                <field name="checkout_time"/>
+                <field name="stay_minutes"/>
+                <field name="total_expense"/>
+                <templates>
+                    <t t-name="card">
+                        <div t-attf-class="o_kanban_record p-2 #{!record.is_covered.raw_value and 'border border-danger' or ''}"
+                             style="font-size:12px;">
+                            <div class="d-flex justify-content-between mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div t-attf-class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0
+                                        #{record.state.raw_value == 'approved' and 'bg-success-subtle text-success' or
+                                          record.state.raw_value == 'submitted' and 'bg-warning-subtle text-warning' or
+                                          record.state.raw_value == 'rejected' and 'bg-danger-subtle text-danger' or
+                                          'bg-secondary-subtle text-secondary'}"
+                                         style="width:30px;height:30px;font-size:11px;">
+                                        <t t-esc="record.user_id.value[0]"/>
+                                    </div>
+                                    <div style="line-height:1.1;">
+                                        <strong style="font-size:13px;">
+                                            <field name="user_id"/>
+                                        </strong><br/>
+                                        <span class="text-muted" style="font-size:10px;">
+                                            <field name="sale_team_id"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="d-flex flex-column align-items-end gap-1">
+
+                                    <span t-attf-class="badge rounded-pill
+                                        #{record.state.raw_value == 'draft' and 'text-bg-secondary' or
+                                          record.state.raw_value == 'submitted' and 'text-bg-warning' or
+                                          record.state.raw_value == 'approved' and 'text-bg-success' or
+                                          record.state.raw_value == 'rejected' and 'text-bg-danger' or
+                                          'text-bg-dark'}"
+                                          style="font-size:9px;padding:3px 6px;">
+                                        <t t-esc="record.state.value"/>
+                                    </span>
+
+                                    <span t-attf-class="badge rounded-pill
+                                        #{record.priority.raw_value == '2' and 'text-bg-danger' or
+                                          record.priority.raw_value == '1' and 'text-bg-warning' or
+                                          'text-bg-secondary'}"
+                                          style="font-size:9px;padding:3px 6px;">
+                                        <t t-if="record.priority.raw_value == '2'">High</t>
+                                        <t t-elif="record.priority.raw_value == '1'">Med</t>
+                                        <t t-else="">Normal</t>
+                                    </span>
+
+                                    <span t-if="!record.is_covered.raw_value"
+                                          class="badge text-bg-danger"
+                                          style="font-size:9px;padding:3px 6px;">
+                                        Not Covered
+                                    </span>
+
+                                </div>
+                            </div>
+
+                            <hr class="my-1 opacity-25"/>
+
+                            <div style="font-size:13px;font-weight:600;">
+                                <field name="name"/>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-1" style="font-size:10px;">
+                                <span class="text-muted">
+                                    <field name="visit_date"/>
+                                </span>
+                                <span class="badge text-bg-light">
+                                    <field name="purpose"/>
+                                </span>
+                            </div>
+
+         
+                            <div style="font-size:10px;" class="mb-2">
+                                <field name="partner_ids" widget="many2many_tags"/>
+                            </div>
+
+                            <!-- STATS -->
+                            <div class="d-flex justify-content-between text-center mb-2">
+                                <div>
+                                    <div class="text-muted" style="font-size:9px;">Stay</div>
+                                    <strong style="font-size:12px;">
+                                        <field name="stay_minutes"/>
+                                    </strong>
+                                </div>
+
+                                <div>
+                                    <div class="text-muted" style="font-size:9px;">Expense</div>
+                                    <strong style="font-size:12px;">
+                                        <field name="total_expense"/>
+                                    </strong>
+                                </div>
+                            </div>
+
+                            <!-- TIME -->
+                            <div class="d-flex justify-content-between" style="font-size:10px;">
+                                <span><field name="checkin_time"/></span>
+                                <span><field name="checkout_time"/></span>
+                            </div>
+
+                            <!-- ACTIONS -->
+                            <div class="d-flex gap-1 mt-2">
+
+                                <t t-if="record.state.raw_value == 'draft'">
+                                    <button type="object" name="action_submit"
+                                            class="btn btn-primary btn-sm w-100"
+                                            style="font-size:10px;padding:2px;">
+                                        Submit
+                                    </button>
+                                </t>
+
+                                <t t-if="record.state.raw_value == 'submitted'">
+                                    <button type="object" name="action_approve"
+                                            class="btn btn-success btn-sm"
+                                            style="font-size:10px;">
+                                        OK
+                                    </button>
+                                    <button type="object" name="action_reject"
+                                            class="btn btn-danger btn-sm"
+                                            style="font-size:10px;">
+                                        X
+                                    </button>
+                                </t>
+
+                                <t t-if="record.state.raw_value == 'approved'">
+                                    <button type="object" name="action_done"
+                                            class="btn btn-secondary btn-sm w-100"
+                                            style="font-size:10px;">
+                                        Done
+                                    </button>
+                                </t>
+
+                                <t t-if="record.state.raw_value in ['rejected','done']">
+                                    <button type="object" name="action_reset_draft"
+                                            class="btn btn-outline-secondary btn-sm w-100"
+                                            style="font-size:10px;">
+                                        Reset
+                                    </button>
+                                </t>
+
+                            </div>
+
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ================= FORM VIEW ================= -->
     <record id="view_salesperson_visit_plan_form" model="ir.ui.view">
         <field name="name">salesperson.visit.plan.form</field>
         <field name="model">salesperson.visit.plan</field>
         <field name="arch" type="xml">
             <form string="Planned Visit">
-               <header>
-                <button name="action_submit"
-                    string="Submit"
-                    type="object"
-                    class="btn-primary"
-                    help="Submit for manager approval"/>
 
-                <button name="action_approve"
-                    string="Approve"
-                    type="object"
-                    class="btn-success"
-                    invisible="state != 'submitted' or is_manager"
-                    confirm="Are you sure you want to approve this?"/>
+                <header>
+                    <button name="action_submit" string="Submit" type="object" class="btn-primary"/>
+                    <button name="action_approve" string="Approve" type="object" class="btn-success"
+                            invisible="state != 'submitted' or is_manager"/>
+                    <button name="action_reject" string="Reject" type="object" class="btn-danger"
+                            invisible="state != 'submitted' or is_manager"/>
+                    <button name="action_done" string="Done" type="object"
+                            invisible="state != 'approved'"/>
+                    <button name="action_reset_draft" string="Reset" type="object"
+                            invisible="state not in ('rejected', 'done')"/>
 
-                <button name="action_reject"
-                    string="Reject"
-                    type="object"
-                    class="btn-danger"
-                    invisible="state != 'submitted' or is_manager"
-                    confirm="Are you sure you want to reject this?"/>
-
-                <button name="action_done"
-                    string="Mark as Done"
-                    type="object"
-                    class="btn-secondary"
-                    invisible="state != 'approved'"
-                    help="Mark this task as completed"/>
-
-                <button name="action_reset_draft"
-                    string="Reset to Draft"
-                    type="object"
-                    class="btn-link"
-                    invisible="state not in ('rejected', 'done')"
-                    confirm="This will reset the record. Continue?"/>
-                    
-                <field name="state"
-                    widget="statusbar"
-                    statusbar_visible="draft,submitted,approved,rejected,done"
-                    statusbar_colors='{
-                        "draft":"blue",
-                        "submitted":"orange",
-                        "approved":"green",
-                        "rejected":"red",
-                        "done":"gray"
-                    }'/>
-
-            </header>
+                    <field name="state" widget="statusbar"/>
+                </header>
 
                 <sheet>
-                    <div>
-                        <h1><field name="name" readonly="1"/></h1>
-                        <field name="date"/>
-                    </div>
-
-
-                      <group string="Basic Informations">
-                        <group>
-                            <field name="user_id"/>
-                            <field name="visit_date"/>
-                        </group>
-                        <group>
-
-                            <field name="purpose"/>
-                            <field name="priority"/>
-                        </group>
-                
-                            <field name="partner_ids" widget="many2many_tags" string="Customers"/>
-
-                        </group>
-
-                        <group string="Location and coverage">
-                        
-                        <group>
-                            <field name="location_name" string="Location Name"/>
-                            <field name="latitude" string="Latitude"/>
-                        </group>
-        
-                        <group>
-                            <field name="radius_meters" string="Radius (meters)"/>
-                            <field name="longitude" string="Longitude"/>
-                        </group>
-
-                        </group>
-
-
-                    <group string="Check-in / Check-out">
-                        <group>
-                            <field name="checkin_time"/>
-                            <field name="checkout_time"/>
-                        </group>
-
-                        <group>
-                            <field name="stay_minutes" readonly="1"/>
-                        </group>
+                    <group>
+                        <field name="name"/>
+                        <field name="visit_date"/>
+                        <field name="user_id"/>
+                        <field name="purpose"/>
+                        <field name="priority"/>
+                        <field name="partner_ids" widget="many2many_tags"/>
                     </group>
 
-                    <group string="Expenses">
-                            <group>
-                                <field name="expense_transport" string="Transport Cost"/>
-                                <field name="expense_food" string="Food Cost"/>
-                                <field name="expense_other" string="Other Cost"/>
-                            </group>
-
-                            <group>
-                                <field name="total_expense" string="Total" readonly="1"/>
-                            </group>
-                        </group>
-
                     <notebook>
-                         <page string="Travel Lines">
+                        <page string="Travel Lines">
                             <field name="space_line_ids">
-                                <list editable="bottom" class="o_list_compact">
-                                    <field name="sequence" widget="handle"/>
+                                <list editable="bottom">
+                                    <field name="sequence"/>
                                     <field name="visit_date"/>
-                                    <field name="partner_id"/>
+                                    <field name="partner_id" widget="many2many_tags"/>
                                     <field name="from_location"/>
                                     <field name="to_location"/>
                                     <field name="total_cost"/>
-                                    <field name="notes"/>
                                 </list>
                             </field>
-                        </page>
-                        <page string="Related Notes">
-                             <field name="html_note"/>
                         </page>
                     </notebook>
                 </sheet>
@@ -170,20 +249,22 @@
         </field>
     </record>
 
+    <!-- ACTIONS -->
     <record id="action_salesperson_visit_plan" model="ir.actions.act_window">
         <field name="name">Planned Visits</field>
         <field name="res_model">salesperson.visit.plan</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">kanban,list,form</field>
     </record>
 
     <record id="action_salesperson_visit_plan_my" model="ir.actions.act_window">
         <field name="name">My Planned Visits</field>
         <field name="res_model">salesperson.visit.plan</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="domain">[('user_id', '=', uid)]</field>
         <field name="context">{'default_user_id': uid}</field>
     </record>
 
+    <!-- MENU -->
     <menuitem id="menu_salesperson_tracking_root"
               name="Salesperson Tracking"
               sequence="1"/>

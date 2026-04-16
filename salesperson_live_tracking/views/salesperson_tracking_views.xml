@@ -10,20 +10,20 @@
             decoration-info="state == 'visited'"
             decoration-danger="state == 'rejected'"
             decoration-muted="tracking_status == 'offline'" class="o_list_compact">
-                <field name="user_id"/>
-                <field name="sale_team_id" optional="show"/>
-                <field name="tracking_status"/>
-                <field name="state"/>
+                <field name="user_id" width="200"/>
+                <field name="sale_team_id" optional="show" width="200"/>
+                <field name="tracking_status" width="200"/>
+                <field name="state" width="200"/>
                 <field name="last_seen"/>
-                <field name="last_accuracy" optional="show"/>
-                <field name="last_speed" optional="hide"/>
-                <field name="today_plan_count" optional="show"/>
-                <field name="today_covered_count" optional="show"/>
-                <field name="kpi_visit_completion_rate" string="Completion %" optional="show"/>
-                <field name="location_name" optional="show"/>
-                <field name="latitude" optional="show"/>
-                <field name="longitude" optional="show"/>
-                <field name="route_deviation_alert" optional="show" string="Deviation Alert"/>
+                <field name="last_accuracy" optional="show" width="200"/>
+                <field name="last_speed" optional="hide" width="200"/>
+                <field name="today_plan_count" optional="show" width="200"/>
+                <field name="today_covered_count" optional="show" width="200"/>
+                <field name="kpi_visit_completion_rate" string="Completion %" optional="show" width="200"/>
+                <field name="location_name" optional="show" width="200"/>
+                <field name="latitude" optional="show" width="200"/>
+                <field name="longitude" optional="show" width="200"/>
+                <field name="route_deviation_alert" optional="show" string="Deviation Alert" width="200"/>
             </list>
         </field>
     </record>
@@ -339,13 +339,13 @@
                                       decoration-danger="state == 'rejected'"
                                       decoration-info="state == 'planned'"
                                       class="o_list_compact">
-                                    <field name="partner_id" string="Partner"/>
-                                    <field name="visit_date" string="Visit Date"/>
-                                    <field name="from_location" string="From"/>
-                                    <field name="to_location" string="To"/>
-                                    <field name="total_cost" string="Total Cost"/>
-                                    <field name="state" string="Status"/>
-                                    <field name="notes" string="Notes" optional="show"/>
+                                    <field name="partner_id" string="Partner" width="200"/>
+                                    <field name="visit_date" string="Visit Date" width="200"/>
+                                    <field name="from_location" string="From" width="200"/>
+                                    <field name="to_location" string="To" width="200"/>
+                                    <field name="total_cost" string="Total Cost" width="200"/>
+                                    <field name="state" string="Status" width="200"/>
+                                    <field name="notes" string="Notes" optional="show" width="200"/>
                                 </list>
                             </field>
                         </page>
@@ -376,15 +376,14 @@
         <field name="model">salesperson.location.log</field>
         <field name="arch" type="xml">
             <list string="Location History" class="o_list_compact">
-                <field name="tracked_at"/>
-                <field name="user_id"/>
-                <field name="location_name"/>
-                <field name="latitude"/>
-                <field name="longitude"/>
-                <field name="accuracy" optional="show"/>
-                <field name="speed" optional="show"/>
-                <field name="source" optional="show"/>
-                <field name="openstreetmap_url" widget="url" string="Map"/>
+                <field name="tracked_at" width="200"/>
+                <field name="user_id" width="200"/>
+                <field name="location_name" width="200"/>
+                <field name="latitude" width="200"/>
+                <field name="longitude" width="200"/>
+                <field name="accuracy" optional="show" width="200"/>
+                <field name="speed" optional="show" width="200"/>
+                <field name="openstreetmap_url" widget="url" string="Map" width="200"/>
             </list>
         </field>
     </record>
