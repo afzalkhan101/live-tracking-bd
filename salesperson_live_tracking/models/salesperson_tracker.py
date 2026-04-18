@@ -128,6 +128,7 @@ class SalespersonTracker(models.Model):
             ("visit_date", "=", today),
         ], limit=1)
 
+        print("################################",plan)
         if plan:
             plan._apply_tracking_duration(duration_seconds)
         return True

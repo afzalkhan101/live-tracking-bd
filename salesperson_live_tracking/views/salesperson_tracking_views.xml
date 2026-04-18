@@ -326,6 +326,10 @@
                             </group>
                     </group>
 
+                    <group string="TEST Fields">
+                        <field name="last_tracking_duration"/>
+                    </group>
+
 
                     <notebook>
                         <page string="Travel Lines">

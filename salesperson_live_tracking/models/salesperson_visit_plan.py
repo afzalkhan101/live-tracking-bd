@@ -11,6 +11,7 @@ def _haversine_distance_meters(lat1, lon1, lat2, lon2):
     a = sin(dlat / 2.0) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2.0) ** 2
     return 2.0 * radius * asin(sqrt(a))
 
+
 class SalespersonVisitPlan(models.Model):
     _name = "salesperson.visit.plan"
     _description = "Salesperson Planned Visit"
@@ -156,7 +157,7 @@ class SalespersonVisitPlan(models.Model):
 
 
     def _push_to_dashboard(self):
-        
+
         salesperson_tracker = self.env["salesperson.tracker"]
         Line = self.env["sales.person.space.line"]
         for rec in self:
