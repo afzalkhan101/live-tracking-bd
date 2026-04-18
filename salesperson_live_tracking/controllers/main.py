@@ -95,35 +95,39 @@ class SalespersonTrackingController(http.Controller):
         })
 
   
-    @http.route("/salesperson_tracking/stop", type="http", auth="user", methods=["POST"], csrf=False)
+    @http.route(
+        "/salesperson_tracking/stop",
+        type="http",
+        auth="user",
+        methods=["POST"],
+        csrf=False
+    )
     def salesperson_tracking_stop(self, **kwargs):
-        user    = self._check_salesperson_access()
+
+        user = self._check_salesperson_access()
         payload = self._json_body()
+
         tracker = user.sudo()._ensure_salesperson_tracker()
-        vals = {
-            "is_tracking":         False,
-            "last_tracking_start": False,
-        }
-        
+
+        duration_seconds = 0
+
         try:
-            duration_seconds = int(payload.get("duration_seconds") or 0)   
+            duration_seconds = int(payload.get("duration_seconds") or 0)
         except (TypeError, ValueError):
             duration_seconds = 0
 
+        # fallback calculation
         if duration_seconds <= 0 and tracker.last_tracking_start:
             delta = fields.Datetime.now() - tracker.last_tracking_start
             duration_seconds = int(delta.total_seconds())
 
-        if 0 < duration_seconds < 86400:
-            vals["last_tracking_duration"] = duration_seconds
-
-    
-        tracker.sudo().write(vals)
+        # 👉 PUSH ONLY TO MODEL
+        tracker.sudo().action_stop_tracking(duration_seconds)
 
         return request.make_json_response({
-            "ok":             True,
-            "status":         tracker.tracking_status,
+            "ok": True,
             "duration_saved": duration_seconds,
+            "status": tracker.tracking_status,
         })
     
 
@@ -144,7 +148,6 @@ class SalespersonTrackingController(http.Controller):
         tracker = user.sudo()._ensure_salesperson_tracker()
         location_name = payload.get("location_name") or tracker.location_name or "Unknown Location"
 
-        # Close any existing open check-in first
         existing = request.env["salesperson.checkin"].sudo().search(
             [("user_id", "=", user.id), ("state", "=", "checked_in")], limit=1
         )
@@ -167,9 +170,7 @@ class SalespersonTrackingController(http.Controller):
             "location_name": location_name,
             "checkin_time": fields.Datetime.to_string(checkin.checkin_time),
         })
-
-    # ── check-out ──────────────────────────────────────────────────────────────
-
+    
     @http.route("/salesperson_tracking/checkout", type="http", auth="user", methods=["POST"], csrf=False)
     def salesperson_tracking_checkout(self, **kwargs):
         """
@@ -210,8 +211,7 @@ class SalespersonTrackingController(http.Controller):
             "duration": checkin.duration_display,
             "checkout_time": fields.Datetime.to_string(checkin.checkout_time),
         })
-
-    # ── selfie upload ──────────────────────────────────────────────────────────
+    
 
     @http.route("/salesperson_tracking/selfie", type="http", auth="user", methods=["POST"], csrf=False)
     def salesperson_tracking_selfie(self, **kwargs):

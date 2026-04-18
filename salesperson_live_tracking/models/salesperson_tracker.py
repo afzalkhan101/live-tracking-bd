@@ -74,6 +74,7 @@ class SalespersonTracker(models.Model):
     )
 
     last_tracking_start    = fields.Datetime(string="Tracking Started At")
+    # Duration value of the sales Tracking . 
     last_tracking_duration = fields.Integer(string="Last Session Duration (sec)", default=0)
     route_deviation_alert  = fields.Boolean(string="Route Deviation Alert", default=False)
     last_alert_sent        = fields.Datetime(string="Last Alert Sent")
@@ -105,6 +106,32 @@ class SalespersonTracker(models.Model):
         compute='_compute_total_expense',
         store=True
     )
+
+    #Traking Duration value is Done 
+
+    def action_stop_tracking(self, duration_seconds):
+        self.ensure_one()
+
+        if duration_seconds < 0:
+            duration_seconds = 0
+
+        self.write({
+            "is_tracking": False,
+            "last_tracking_start": False,
+            "last_tracking_duration": duration_seconds,
+        })
+
+        today = fields.Date.context_today(self)
+
+        plan = self.env["salesperson.visit.plan"].sudo().search([
+            ("user_id", "=", self.user_id.id),
+            ("visit_date", "=", today),
+        ], limit=1)
+
+        if plan:
+            plan._apply_tracking_duration(duration_seconds)
+        return True
+    
 
     @api.depends('expense_transport', 'expense_food', 'expense_other')
     def _compute_total_expense(self):

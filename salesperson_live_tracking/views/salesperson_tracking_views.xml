@@ -209,7 +209,7 @@
                             string="Accept"
                             type="object"
                             class="btn-success"
-                            invisible="state != 'planned' or is_salesperson"/>
+                            invisible="state != 'planned'"/>
 
                     <button name="action_set_rejected"
                             string="Reject"

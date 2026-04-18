@@ -95,11 +95,6 @@ class SalespersonVisitPlan(models.Model):
     state = fields.Selection([
         ("draft", "Draft"),
         ("submitted", "Submitted"),
-        ("approved", "Approved"),
-        ("planned", "Planned"),
-        ("accepted", "Accepted"),
-        ("visited", "Visited"),
-        ("rejected", "Rejected"),
         ("done", "Done")
     ], default="draft", tracking=True)
 
@@ -156,31 +151,12 @@ class SalespersonVisitPlan(models.Model):
         self.filtered(lambda r: r.state == 'draft').write({'state': 'submitted'})
         self._push_to_dashboard()
 
-    def action_approve(self):
-        self.filtered(lambda r: r.state == 'submitted').write({'state': 'approved'})
-        self._push_to_dashboard()
-
-    def action_plan(self):
-        self.filtered(lambda r: r.state == 'approved').write({'state': 'planned'})
-
-    def action_accept(self):
-        self.filtered(lambda r: r.state == 'planned').write({'state': 'accepted'})
-
-    def action_visit(self):
-        self.filtered(lambda r: r.state == 'accepted').write({'state': 'visited'})
-
-    def action_done(self):
-        self.filtered(lambda r: r.state == 'visited').write({'state': 'done'})
-
-    def action_reject(self):
-        self.filtered(lambda r: r.state in ('submitted', 'approved')).write({'state': 'rejected'})
-
     def action_reset_draft(self):
         self.write({'state': 'draft'})
 
 
     def _push_to_dashboard(self):
-
+        
         salesperson_tracker = self.env["salesperson.tracker"]
         Line = self.env["sales.person.space.line"]
         for rec in self:

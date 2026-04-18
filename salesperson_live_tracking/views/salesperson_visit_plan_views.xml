@@ -58,7 +58,6 @@
                             <div class="d-flex justify-content-between mb-2">
                                 <div class="d-flex align-items-center gap-2">
                                     <div t-attf-class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0
-                                        #{record.state.raw_value == 'approved' and 'bg-success-subtle text-success' or
                                           record.state.raw_value == 'submitted' and 'bg-warning-subtle text-warning' or
                                           record.state.raw_value == 'rejected' and 'bg-danger-subtle text-danger' or
                                           'bg-secondary-subtle text-secondary'}"
@@ -79,7 +78,6 @@
                                     <span t-attf-class="badge rounded-pill
                                         #{record.state.raw_value == 'draft' and 'text-bg-secondary' or
                                           record.state.raw_value == 'submitted' and 'text-bg-warning' or
-                                          record.state.raw_value == 'approved' and 'text-bg-success' or
                                           record.state.raw_value == 'rejected' and 'text-bg-danger' or
                                           'text-bg-dark'}"
                                           style="font-size:9px;padding:3px 6px;">
@@ -119,13 +117,10 @@
                                     <field name="purpose"/>
                                 </span>
                             </div>
-
-         
                             <div style="font-size:10px;" class="mb-2">
                                 <field name="partner_ids" widget="many2many_tags"/>
                             </div>
 
-                            <!-- STATS -->
                             <div class="d-flex justify-content-between text-center mb-2">
                                 <div>
                                     <div class="text-muted" style="font-size:9px;">Stay</div>
@@ -142,13 +137,11 @@
                                 </div>
                             </div>
 
-                            <!-- TIME -->
                             <div class="d-flex justify-content-between" style="font-size:10px;">
                                 <span><field name="checkin_time"/></span>
                                 <span><field name="checkout_time"/></span>
                             </div>
 
-                            <!-- ACTIONS -->
                             <div class="d-flex gap-1 mt-2">
 
                                 <t t-if="record.state.raw_value == 'draft'">
@@ -158,28 +151,6 @@
                                         Submit
                                     </button>
                                 </t>
-
-                                <t t-if="record.state.raw_value == 'submitted'">
-                                    <button type="object" name="action_approve"
-                                            class="btn btn-success btn-sm"
-                                            style="font-size:10px;">
-                                        OK
-                                    </button>
-                                    <button type="object" name="action_reject"
-                                            class="btn btn-danger btn-sm"
-                                            style="font-size:10px;">
-                                        X
-                                    </button>
-                                </t>
-
-                                <t t-if="record.state.raw_value == 'approved'">
-                                    <button type="object" name="action_done"
-                                            class="btn btn-secondary btn-sm w-100"
-                                            style="font-size:10px;">
-                                        Done
-                                    </button>
-                                </t>
-
                                 <t t-if="record.state.raw_value in ['rejected','done']">
                                     <button type="object" name="action_reset_draft"
                                             class="btn btn-outline-secondary btn-sm w-100"
@@ -202,21 +173,25 @@
         <field name="model">salesperson.visit.plan</field>
         <field name="arch" type="xml">
             <form string="Planned Visit">
-
                 <header>
-                    <button name="action_submit" string="Submit" type="object" class="btn-primary"/>
-                    <button name="action_approve" string="Approve" type="object" class="btn-success"
-                            invisible="state != 'submitted' or is_manager"/>
-                    <button name="action_reject" string="Reject" type="object" class="btn-danger"
-                            invisible="state != 'submitted' or is_manager"/>
-                    <button name="action_done" string="Done" type="object"
-                            invisible="state != 'approved'"/>
-                    <button name="action_reset_draft" string="Reset" type="object"
-                            invisible="state not in ('rejected', 'done')"/>
+                    <button name="action_submit"
+                        string="Submit Request"
+                        type="object"
+                        class="oe_highlight btn-primary"
+                        icon="fa-paper-plane"
+                        invisible="state != 'draft'"/>
+                    <button name="action_reset_draft"
+                        string="Reset to Draft"
+                        type="object"
+                        class="btn-secondary"
+                        icon="fa-refresh"
+                        invisible="state not in ('submitted','rejected','done')"/>
 
-                    <field name="state" widget="statusbar"/>
+                    <field name="state"
+                        widget="statusbar"
+                        statusbar_visible="draft,submitted,done"/>
+
                 </header>
-
                 <sheet>
                      <group string="Basic Informations">
                         <group>
