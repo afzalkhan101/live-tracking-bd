@@ -1,6 +1,7 @@
 /* ══════════════════════════════════════════════
    live_tracking.js
    Salesperson Live Tracking — GPS + Camera logic
+   Tracking interval: every 3 minutes (fixed)
 ══════════════════════════════════════════════ */
 
 (function () {
@@ -10,7 +11,7 @@
     if (!document.getElementById('startButton')) return;
 
     /* ══════════════════════════════════════════════
-       READ SERVER DATA  (injected via data-* attrs)
+       READ SERVER DATA
     ══════════════════════════════════════════════ */
     const root        = document.getElementById('trackingRoot');
     const initialDist = root ? parseFloat(root.dataset.distance || '0') : 0;
@@ -20,8 +21,7 @@
     ══════════════════════════════════════════════ */
     const state = {
         tracking:      false,
-        watchId:       null,
-        heartbeatId:   null,
+        intervalId:    null,   /* 3-min interval — replaces watchId + heartbeatId */
         timerId:       null,
         lastPayload:   null,
         trackingStart: null,
@@ -53,11 +53,6 @@
        HELPERS
     ══════════════════════════════════════════════ */
 
-    /**
-     * Update the status badge in the header.
-     * @param {string} status  - 'live' | 'idle' | 'offline'
-     * @param {string} label   - Human-readable label
-     */
     const updateStatus = (status, label) => {
         const s = status || 'offline';
         el.statusBadge.className   = `status-badge badge-${s}`;
@@ -65,20 +60,11 @@
         el.statusLabel.textContent = label || 'Offline';
     };
 
-    /**
-     * Set the notice banner below the action bar.
-     * @param {string} type    - '' | 'success' | 'warning' | 'danger'
-     * @param {string} title
-     * @param {string} message
-     */
     const setNotice = (type, title, message) => {
         el.noticeBox.className = `notice${type ? ' notice-' + type : ''}`;
         el.noticeBox.innerHTML = `<strong>${title}</strong>${message}`;
     };
 
-    /**
-     * Format elapsed milliseconds as MM:SS or HH:MM:SS.
-     */
     const formatDuration = (ms) => {
         const totalSec = Math.floor(ms / 1000);
         const h = Math.floor(totalSec / 3600);
@@ -90,18 +76,11 @@
             : `${pad(m)}:${pad(s)}`;
     };
 
-    /** Update the "Taking Time" metric every second while tracking. */
     const tickTimer = () => {
         if (!state.trackingStart) return;
         el.takingTimeValue.textContent = formatDuration(Date.now() - state.trackingStart);
     };
 
-    /**
-     * POST JSON payload to a backend endpoint.
-     * @param {string} url
-     * @param {object} payload
-     * @returns {Promise<object>}
-     */
     const postJson = async (url, payload) => {
         const res = await fetch(url, {
             method:      'POST',
@@ -116,7 +95,6 @@
 
     /* ══════════════════════════════════════════════
        METRICS REFRESH
-       Called after every successful location push.
     ══════════════════════════════════════════════ */
     const refreshMetrics = (payload, resp) => {
         const lat = payload.latitude?.toFixed  ? payload.latitude.toFixed(6)  : payload.latitude;
@@ -132,39 +110,60 @@
         if (resp.map_url) el.mapButton.href = resp.map_url;
         updateStatus(resp.status, resp.status_label);
 
-        /* Live KM distance from backend */
         if (el.kpiDistance && resp.total_distance_km != null) {
             el.kpiDistance.textContent = parseFloat(resp.total_distance_km).toFixed(1);
         }
 
-        /* Warn when GPS accuracy is poor */
         if (payload.accuracy && Number(payload.accuracy) > 200) {
             setNotice('warning', 'Low GPS accuracy',
                 ' Move outdoors or enable high-accuracy mode for a precise location name.');
         }
     };
 
-    
-    const sendLocation = async (position) => {
-        const payload = {
-            latitude:  position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy:  position.coords.accuracy,
-            speed:     position.coords.speed,
-            heading:   position.coords.heading,
-            source:    'browser',
-        };
-        state.lastPayload = payload;
-        const result = await postJson('/salesperson_tracking/update', payload);
-        refreshMetrics(payload, result);
+    /* ══════════════════════════════════════════════
+       SEND LOCATION
+       Gets fresh GPS fix then POSTs to backend.
+       Called once immediately on start, then every 3 minutes.
+       Device নড়লেও না নড়লেও — শুধু interval এ call হবে।
+    ══════════════════════════════════════════════ */
+    const GPS_OPTS = { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 };
+    const INTERVAL_MS = 3 * 60 * 1000; /* 3 minutes = 180,000 ms */
 
-        if (!payload.accuracy || Number(payload.accuracy) <= 200) {
-            setNotice('success', 'Tracking active',
-                ' Odoo is receiving fresh GPS points from this device.');
-        }
+    const fetchAndSend = () => {
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const payload = {
+                    latitude:  position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy:  position.coords.accuracy,
+                    speed:     position.coords.speed,
+                    heading:   position.coords.heading,
+                    source:    'browser',
+                };
+                state.lastPayload = payload;
+
+                try {
+                    const result = await postJson('/salesperson_tracking/update', payload);
+                    refreshMetrics(payload, result);
+
+                    if (!payload.accuracy || Number(payload.accuracy) <= 200) {
+                        setNotice('success', 'Tracking active',
+                            ' Odoo is receiving fresh GPS points from this device.');
+                    }
+                } catch (e) {
+                    setNotice('warning', 'Update failed', ' ' + e.message);
+                }
+            },
+            (err) => {
+                setNotice('warning', 'GPS error', ' ' + (err.message || 'Could not read device location.'));
+            },
+            GPS_OPTS
+        );
     };
 
-    /** Start GPS watch + heartbeat interval. */
+    /* ══════════════════════════════════════════════
+       START TRACKING
+    ══════════════════════════════════════════════ */
     const startTracking = async () => {
         if (!navigator.geolocation) {
             setNotice('danger', 'Not supported', ' This browser does not support geolocation.');
@@ -177,14 +176,32 @@
         updateStatus('live', 'Starting…');
         state.trackingStart            = Date.now();
         el.takingTimeValue.textContent = '00:00';
-        state.timerId = setInterval(tickTimer, 1000);
+        state.timerId                  = setInterval(tickTimer, 1000);
 
-        const opts = { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 };
-
-        // প্রথম fix — সাথে সাথে একবার
+        /* ── First fix immediately ── */
         navigator.geolocation.getCurrentPosition(
-            (pos) => sendLocation(pos).catch((e) => setNotice('danger', 'Update failed', ' ' + e.message)),
+            async (position) => {
+                const payload = {
+                    latitude:  position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy:  position.coords.accuracy,
+                    speed:     position.coords.speed,
+                    heading:   position.coords.heading,
+                    source:    'browser',
+                };
+                state.lastPayload = payload;
+
+                try {
+                    const result = await postJson('/salesperson_tracking/update', payload);
+                    refreshMetrics(payload, result);
+                    setNotice('success', 'Tracking active',
+                        ' Odoo is receiving fresh GPS points from this device.');
+                } catch (e) {
+                    setNotice('danger', 'Update failed', ' ' + e.message);
+                }
+            },
             (err) => {
+                /* GPS permission denied on first try — abort */
                 state.tracking          = false;
                 el.startButton.disabled = false;
                 if (state.timerId !== null) { clearInterval(state.timerId); state.timerId = null; }
@@ -193,26 +210,21 @@
                 updateStatus('offline', 'Offline');
                 setNotice('danger', 'Permission needed', ' ' + (err.message || 'GPS access was denied.'));
             },
-            opts
+            GPS_OPTS
         );
 
-        // প্রতি 3 মিনিট পরপর
-        state.heartbeatId = setInterval(() => {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => sendLocation(pos).catch((e) => setNotice('warning', 'Update failed', ' ' + e.message)),
-                (err) => setNotice('warning', 'Tracking error', ' ' + err.message),
-                opts
-            );
-        }, 180000);
-       };
+        /* ── Repeat every 3 minutes — device নড়ুক বা না নড়ুক ── */
+        state.intervalId = setInterval(fetchAndSend, INTERVAL_MS);
+    };
 
-    /** Stop GPS watch, heartbeat, and notify backend. */
+    /* ══════════════════════════════════════════════
+       STOP TRACKING
+    ══════════════════════════════════════════════ */
     const stopTracking = async () => {
         state.tracking = false;
 
-        if (state.watchId    !== null) { navigator.geolocation.clearWatch(state.watchId); state.watchId    = null; }
-        if (state.heartbeatId !== null) { clearInterval(state.heartbeatId);               state.heartbeatId = null; }
-        if (state.timerId     !== null) { clearInterval(state.timerId);                   state.timerId     = null; }
+        if (state.intervalId !== null) { clearInterval(state.intervalId); state.intervalId = null; }
+        if (state.timerId    !== null) { clearInterval(state.timerId);    state.timerId    = null; }
 
         const durationSeconds = state.trackingStart
             ? Math.floor((Date.now() - state.trackingStart) / 1000)
@@ -239,7 +251,7 @@
     el.stopButton.addEventListener('click', () =>
         stopTracking().catch((e) => setNotice('danger', 'Stop failed', ' ' + e.message)));
 
-    /* ── Send beacon on page hide (tab close / navigation) ── */
+    /* ── Send beacon on tab close / navigation ── */
     window.addEventListener('pagehide', () => {
         if (state.tracking) {
             navigator.sendBeacon('/salesperson_tracking/stop',
@@ -276,10 +288,6 @@
     let photos       = [];
     let viewingIndex = -1;
 
-    /**
-     * Start the device camera with the given facing mode.
-     * @param {string} facing - 'user' | 'environment'
-     */
     async function startCamera(facing) {
         if (stream) stream.getTracks().forEach((t) => t.stop());
         try {
@@ -290,8 +298,8 @@
                     height:     { ideal: 960 },
                 },
             });
-            video.srcObject        = stream;
-            video.style.display    = 'block';
+            video.srcObject           = stream;
+            video.style.display       = 'block';
             previewBox.style.display  = 'block';
             openBtn.style.display     = 'none';
             snapRow.style.display     = 'none';
@@ -304,7 +312,6 @@
         }
     }
 
-    /** Stop camera stream and restore the open-camera button. */
     function closeCamera() {
         if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; }
         video.style.display       = 'none';
@@ -316,7 +323,6 @@
         if (photos.length > 0) renderGallery();
     }
 
-    /** Re-render the photo gallery grid. */
     function renderGallery() {
         camGallery.style.display = 'flex';
         galleryCount.textContent = `Saved photos (${photos.length})`;
@@ -328,15 +334,14 @@
         }
 
         photos.forEach(function (p, i) {
-            const img   = document.createElement('img');
-            img.src     = p.dataUrl;
-            img.title   = p.ts;
+            const img = document.createElement('img');
+            img.src   = p.dataUrl;
+            img.title = p.ts;
             img.addEventListener('click', () => openViewer(i));
             galleryGrid.appendChild(img);
         });
     }
 
-    /** Open a single-photo viewer at the given index. */
     function openViewer(idx) {
         viewingIndex              = idx;
         viewerImg.src             = photos[idx].dataUrl;
@@ -345,9 +350,7 @@
         openBtn.style.display     = 'none';
     }
 
-    /* ── Camera button listeners ── */
     openBtn.addEventListener('click', () => startCamera(facingMode));
-
     stopBtn.addEventListener('click', closeCamera);
 
     flipBtn.addEventListener('click', () => {
@@ -358,11 +361,9 @@
     captureBtn.addEventListener('click', () => {
         if (!stream) return;
 
-        /* Flash effect */
         flashEl.classList.add('go');
         setTimeout(() => flashEl.classList.remove('go'), 160);
 
-        /* Draw frame to canvas */
         canvas.width  = video.videoWidth  || 640;
         canvas.height = video.videoHeight || 480;
         const ctx = canvas.getContext('2d');
@@ -376,7 +377,6 @@
         downloadLink.href     = dataUrl;
         downloadLink.download = filename;
 
-        /* Upload to Odoo backend */
         fetch('/salesperson_tracking/save_photo', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -407,31 +407,27 @@
         camGallery.style.display = 'none';
     });
 
-    /* Save / download link */
     downloadLink.addEventListener('click', (e) => {
         e.preventDefault();
-        const a      = document.createElement('a');
-        a.href       = downloadLink.href;
-        a.download   = downloadLink.download;
+        const a    = document.createElement('a');
+        a.href     = downloadLink.href;
+        a.download = downloadLink.download;
         a.click();
     });
 
-    /* Viewer — back */
     pvBack.addEventListener('click', () => {
         photoViewer.style.display = 'none';
         renderGallery();
         if (!stream) openBtn.style.display = 'inline-flex';
     });
 
-    /* Viewer — download */
     pvDownload.addEventListener('click', () => {
-        const a      = document.createElement('a');
-        a.href       = photos[viewingIndex].dataUrl;
-        a.download   = `photo_${Date.now()}.jpg`;
+        const a    = document.createElement('a');
+        a.href     = photos[viewingIndex].dataUrl;
+        a.download = `photo_${Date.now()}.jpg`;
         a.click();
     });
 
-    /* Viewer — delete */
     pvDelete.addEventListener('click', () => {
         photos.splice(viewingIndex, 1);
         photoViewer.style.display = 'none';
@@ -440,7 +436,6 @@
         if (!stream) openBtn.style.display = 'inline-flex';
     });
 
-    /* Clear all photos */
     clearAllBtn.addEventListener('click', () => {
         photos = [];
         renderGallery();

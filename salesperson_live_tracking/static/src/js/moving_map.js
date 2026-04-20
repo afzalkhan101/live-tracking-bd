@@ -1,4 +1,3 @@
-
 (function () {
     'use strict';
     var mapEl = document.getElementById('map');
@@ -10,13 +9,15 @@
 
     try { points = JSON.parse(atob(b64));     } catch (e) { points = []; }
     try { plans  = JSON.parse(atob(planB64)); } catch (e) { plans  = []; }
-    var DEFAULT_CENTER = [23.7701, 90.4254]; 
+
+    var DEFAULT_CENTER = [23.7701, 90.4254];
     var map = L.map('map', { zoomControl: true }).setView(DEFAULT_CENTER, 15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '\u00a9 <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
     }).addTo(map);
 
+    /* ── No data at all ── */
     if (!points || points.length === 0) {
         document.getElementById('routeLoading').style.display = 'none';
 
@@ -34,7 +35,6 @@
             '  <div class="no-data-sub">No GPS logs available for today.</div>',
             '</div>',
         ].join('');
-
         document.querySelector('.map-wrapper').appendChild(nd);
         return;
     }
@@ -47,6 +47,10 @@
     if (valid.length === 0) valid = points;
 
     var latlngs = valid.map(function (p) { return [p.lat, p.lng]; });
+
+    /* ══════════════════════════════════════════════
+       HELPERS
+    ══════════════════════════════════════════════ */
 
     function downsample(arr, maxPts) {
         if (arr.length <= maxPts) return arr;
@@ -76,7 +80,6 @@
         );
     }
 
-    /** Red teardrop — most recent / last GPS point. */
     function addEndMarker(p) {
         return L.marker([p.lat, p.lng], {
             icon: L.divIcon({
@@ -95,12 +98,10 @@
         .openPopup();
     }
 
-    /** Blue dots with accuracy circle for intermediate waypoints. */
     function addIntermediateMarkers(pts) {
         pts.forEach(function (p, i) {
-            if (i === 0 || i === pts.length - 1) return; /* skip start/end */
+            if (i === 0 || i === pts.length - 1) return;
 
-            /* Accuracy radius circle */
             if (p.accuracy > 0 && p.accuracy <= 500) {
                 L.circle([p.lat, p.lng], {
                     radius:      p.accuracy,
@@ -112,7 +113,6 @@
                 }).addTo(map);
             }
 
-            /* Dot marker */
             var dot = L.circleMarker([p.lat, p.lng], {
                 radius:      4,
                 color:       '#1a73e8',
@@ -135,7 +135,6 @@
         });
     }
 
-    /** Render planned visit markers — green if visited, red if not. */
     function addPlanMarkers(planList) {
         if (!planList || planList.length === 0) return;
         planList.forEach(function (pl) {
@@ -162,7 +161,6 @@
        MAP BOUNDS
     ══════════════════════════════════════════════ */
 
-    /** Fit the viewport to cover all GPS + plan points. */
     function fitAll(routeBounds) {
         var allLatLngs = latlngs.slice();
         if (plans) {
@@ -181,24 +179,19 @@
     }
 
     /* ══════════════════════════════════════════════
-       ROUTE INFO CARD  (Google Maps–style overlay)
+       ROUTE INFO CARD
     ══════════════════════════════════════════════ */
 
-    /**
-     * Populate and show the route info card + top-bar pills.
-     * @param {string} distKm  - e.g. "12.4"
-     * @param {number} durMin  - integer minutes
-     */
     function showRouteInfo(distKm, durMin) {
-        var box  = document.getElementById('routeInfoBox');
-        var dp   = document.getElementById('routeDistancePill');
-        var tp   = document.getElementById('routeDurationPill');
-        var dv   = document.getElementById('routeDistVal');
-        var tv   = document.getElementById('routeDurVal');
+        var box = document.getElementById('routeInfoBox');
+        var dp  = document.getElementById('routeDistancePill');
+        var tp  = document.getElementById('routeDurationPill');
+        var dv  = document.getElementById('routeDistVal');
+        var tv  = document.getElementById('routeDurVal');
 
         document.getElementById('ribDur').textContent  = durMin + ' min';
         document.getElementById('ribDist').textContent = distKm + ' km';
-        box.style.display = 'block';
+        if (box) box.style.display = 'block';
 
         if (dp) { dp.style.display = 'flex'; dv.textContent = distKm + ' km'; }
         if (tp) { tp.style.display = 'flex'; tv.textContent = durMin + ' min'; }
@@ -206,8 +199,9 @@
 
     /* ══════════════════════════════════════════════
        GPS FALLBACK POLYLINE
-       Shown when OSRM is unavailable.
+       Used when point count < 3 OR OSRM unavailable
     ══════════════════════════════════════════════ */
+
     function drawGpsFallback() {
         L.polyline(latlngs, {
             color:     '#6366f1',
@@ -218,14 +212,45 @@
     }
 
     /* ══════════════════════════════════════════════
-       OSRM ROAD ROUTE FETCH
+       RENDER — common finish for both paths
     ══════════════════════════════════════════════ */
 
-    /**
-     * Request a road-snapped route from the public OSRM demo server.
-     * Downsamples to 80 waypoints to stay within URL limits.
-     * @param {function(Error|null, object|null)} callback
-     */
+    function finishRender(bounds) {
+        addIntermediateMarkers(valid);
+        addStartMarker(valid[0]);
+        if (valid.length > 1) addEndMarker(valid[valid.length - 1]);
+        addPlanMarkers(plans);
+        fitAll(bounds || null);
+    }
+
+    /* ══════════════════════════════════════════════
+       MAIN LOGIC
+       - Less than 3 points → skip OSRM, show dashed GPS line
+       - 3+ points          → attempt OSRM road route
+    ══════════════════════════════════════════════ */
+
+    var loadingEl = document.getElementById('routeLoading');
+
+    /* ── Not enough points for a meaningful road route ── */
+    if (valid.length < 3) {
+        if (loadingEl) loadingEl.style.display = 'none';
+
+        /* Show a notice if exactly 1 point (only current position) */
+        if (valid.length === 1) {
+            /* Just drop the end marker, no line */
+            addEndMarker(valid[0]);
+            addPlanMarkers(plans);
+            map.setView([valid[0].lat, valid[0].lng], 16);
+            setTimeout(function () { map.invalidateSize(); }, 300);
+        } else {
+            /* 2 points — dashed line, no OSRM */
+            drawGpsFallback();
+            finishRender(null);
+        }
+        return;
+    }
+
+    /* ── 3+ points: fetch road-snapped route from OSRM ── */
     function fetchRoadRoute(callback) {
         var sampled  = downsample(valid, 80);
         var coordStr = sampled.map(function (p) { return p.lng + ',' + p.lat; }).join(';');
@@ -244,51 +269,39 @@
             .catch(function (e) { callback(e, null); });
     }
 
-  
     fetchRoadRoute(function (err, route) {
-        var loadingEl = document.getElementById('routeLoading');
         if (loadingEl) loadingEl.style.display = 'none';
 
         if (!err && route) {
-            /* ── Road-snapped route from OSRM GeoJSON ── */
             var roadCoords = route.geometry.coordinates.map(function (c) {
-                return [c[1], c[0]]; /* [lng, lat] → [lat, lng] */
+                return [c[1], c[0]];
             });
 
-            /* White outline for road depth feel */
+            /* White outline */
             L.polyline(roadCoords, {
                 color:   '#ffffff',
                 weight:  11,
                 opacity: 0.55,
             }).addTo(map);
 
-            /* Blue road polyline */
+            /* Blue road line */
             var roadLine = L.polyline(roadCoords, {
                 color:   '#1a73e8',
                 weight:  6,
                 opacity: 0.9,
             }).addTo(map);
 
-            /* Distance & duration overlay */
             var distKm = (route.distance / 1000).toFixed(1);
             var durMin = Math.round(route.duration / 60);
             showRouteInfo(distKm, durMin);
 
-            addIntermediateMarkers(valid);
-            addStartMarker(valid[0]);
-            addEndMarker(valid[valid.length - 1]);
-            addPlanMarkers(plans);
-            fitAll(roadLine.getBounds());
+            finishRender(roadLine.getBounds());
 
         } else {
-            /* ── Fallback: dashed GPS path ── */
+            /* OSRM failed — fall back to dashed GPS line */
             console.warn('OSRM unavailable — using GPS fallback:', err);
             drawGpsFallback();
-            addIntermediateMarkers(valid);
-            addStartMarker(valid[0]);
-            addEndMarker(valid[valid.length - 1]);
-            addPlanMarkers(plans);
-            fitAll(null);
+            finishRender(null);
         }
     });
 
