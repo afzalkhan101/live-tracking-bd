@@ -65,7 +65,6 @@
                 return;
             }
 
-            // Stop previous stream if any
             if (stream) {
                 stream.getTracks().forEach((t) => t.stop());
                 stream = null;
@@ -91,8 +90,6 @@
                 camGallery.style.display  = 'none';
                 photoViewer.style.display = 'none';
                 camLabel.textContent      = 'Tap the shutter button to take a photo';
-
-                // Some browsers need a manual play() call
                 video.play().catch(() => {});
 
             } catch (e) {
@@ -218,6 +215,10 @@
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var result = data.result;
+
+                console.log("######################$fmodmfdmfdf",result)
+
+                
                 camLabel.textContent = result && result.success
                     ? '✓ Photo saved in Odoo!'
                     : (result && result.message ? result.message : 'Upload failed');

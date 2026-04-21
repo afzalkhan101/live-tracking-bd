@@ -12,7 +12,7 @@ class SalespersonTrackingController(http.Controller):
         if not user.has_group("sales_team.group_sale_salesman"):
             raise AccessError(_("Only salespeople can use live tracking."))
         return user
-
+    
     def _json_body(self):
         payload = request.httprequest.data or b"{}"
         return json.loads(payload.decode("utf-8"))
@@ -23,7 +23,6 @@ class SalespersonTrackingController(http.Controller):
         tracker = user.sudo()._ensure_salesperson_tracker()
         today   = fields.Date.context_today(request.env.user)
 
-        # Today's planned visits
         plans = request.env["salesperson.visit.plan"].sudo().search(
             [("user_id", "=", user.id), ("visit_date", "=", today)]
         )
