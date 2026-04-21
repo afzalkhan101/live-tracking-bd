@@ -3,39 +3,43 @@
 
     if (!document.getElementById('startButton')) return;
 
-    const root        = document.getElementById('trackingRoot');
+    const root = document.getElementById('trackingRoot');
     const initialDist = root ? parseFloat(root.dataset.distance || '0') : 0;
+
     const state = {
-        tracking:      false,
-        intervalId:    null,
-        lastPayload:   null,
+        tracking: false,
+        intervalId: null,
+        lastPayload: null,
         trackingStart: null,
-        timerId:       null, 
+        timerId: null,
+        lastLat: null,
+        lastLng: null,
+        totalDistance: initialDist, // optional initial distance
     };
 
     const $ = (id) => document.getElementById(id);
 
     const el = {
-        startButton:       $('startButton'),
-        stopButton:        $('stopButton'),
-        statusBadge:       $('statusBadge'),
-        statusDot:         $('statusDot'),
-        statusLabel:       $('statusLabel'),
-        noticeBox:         $('noticeBox'),
-        lastSeenValue:     $('lastSeenValue'),
-        latitudeValue:     $('latitudeValue'),
-        longitudeValue:    $('longitudeValue'),
+        startButton: $('startButton'),
+        stopButton: $('stopButton'),
+        statusBadge: $('statusBadge'),
+        statusDot: $('statusDot'),
+        statusLabel: $('statusLabel'),
+        noticeBox: $('noticeBox'),
+        lastSeenValue: $('lastSeenValue'),
+        latitudeValue: $('latitudeValue'),
+        longitudeValue: $('longitudeValue'),
         locationNameValue: $('locationNameValue'),
-        accuracyValue:     $('accuracyValue'),
-        takingTimeValue:   $('takingTimeValue'),
-        mapButton:         $('mapButton'),
-        kpiDistance:       $('kpiDistance'),
+        accuracyValue: $('accuracyValue'),
+        takingTimeValue: $('takingTimeValue'),
+        mapButton: $('mapButton'),
+        kpiDistance: $('kpiDistance'),
     };
 
     const updateStatus = (status, label) => {
         const s = status || 'offline';
-        el.statusBadge.className   = `status-badge badge-${s}`;
-        el.statusDot.className     = `status-dot dot-${s}`;
+        el.statusBadge.className = `status-badge badge-${s}`;
+        el.statusDot.className = `status-dot dot-${s}`;
         el.statusLabel.textContent = label || 'Offline';
     };
 
@@ -50,6 +54,7 @@
         const m = Math.floor((totalSec % 3600) / 60);
         const s = totalSec % 60;
         const pad = (n) => String(n).padStart(2, '0');
+
         return h > 0
             ? `${pad(h)}:${pad(m)}:${pad(s)}`
             : `${pad(m)}:${pad(s)}`;
@@ -62,26 +67,42 @@
 
     const postJson = async (url, payload) => {
         const res = await fetch(url, {
-            method:      'POST',
-            headers:     { 'Content-Type': 'application/json' },
-            body:        JSON.stringify(payload || {}),
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload || {}),
             credentials: 'same-origin',
-            keepalive:   true,
+            keepalive: true,
         });
+
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
     };
 
+    // OPTIONAL: distance calculation (Haversine)
+    const getDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+
+        const a =
+            Math.sin(dLat / 2) ** 2 +
+            Math.cos(lat1 * Math.PI / 180) *
+            Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) ** 2;
+
+        return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+
     const refreshMetrics = (payload, resp) => {
-        const lat = payload.latitude?.toFixed  ? payload.latitude.toFixed(6)  : payload.latitude;
+        const lat = payload.latitude?.toFixed ? payload.latitude.toFixed(6) : payload.latitude;
         const lng = payload.longitude?.toFixed ? payload.longitude.toFixed(6) : payload.longitude;
         const acc = payload.accuracy ? Number(payload.accuracy).toFixed(1) : '—';
 
-        el.latitudeValue.textContent     = lat || '—';
-        el.longitudeValue.textContent    = lng || '—';
+        el.latitudeValue.textContent = lat || '—';
+        el.longitudeValue.textContent = lng || '—';
         el.locationNameValue.textContent = resp.location_name || '—';
-        el.accuracyValue.textContent     = acc !== '—' ? `${acc} m` : '—';
-        el.lastSeenValue.textContent     = resp.last_seen || new Date().toLocaleTimeString();
+        el.accuracyValue.textContent = acc !== '—' ? `${acc} m` : '—';
+        el.lastSeenValue.textContent = resp.last_seen || new Date().toLocaleTimeString();
 
         if (resp.map_url) el.mapButton.href = resp.map_url;
         updateStatus(resp.status, resp.status_label);
@@ -89,134 +110,90 @@
         if (el.kpiDistance && resp.total_distance_km != null) {
             el.kpiDistance.textContent = parseFloat(resp.total_distance_km).toFixed(1);
         }
-
-        if (payload.accuracy && Number(payload.accuracy) > 200) {
-            setNotice('warning', 'Low GPS accuracy',
-                ' Move outdoors or enable high-accuracy mode for a precise location name.');
-        }
     };
 
     const GPS_OPTS = { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 };
     const INTERVAL_MS = 3 * 60 * 1000;
 
     const fetchAndSend = () => {
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const payload = {
-                    latitude:  position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    accuracy:  position.coords.accuracy,
-                    speed:     position.coords.speed,
-                    heading:   position.coords.heading,
-                    source:    'browser',
-                };
-                state.lastPayload = payload;
+        navigator.geolocation.getCurrentPosition(async (position) => {
 
-                try {
-                    const result = await postJson('/salesperson_tracking/update', payload);
-                    refreshMetrics(payload, result);
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
 
-                    if (!payload.accuracy || Number(payload.accuracy) <= 200) {
-                        setNotice('success', 'Tracking active',
-                            ' Odoo is receiving fresh GPS points from this device.');
-                    }
-                } catch (e) {
-                    setNotice('warning', 'Update failed', ' ' + e.message);
-                }
-            },
-            (err) => {
-                setNotice('warning', 'GPS error', ' ' + (err.message || 'Could not read device location.'));
-            },
-            GPS_OPTS
-        );
+            // distance update
+            if (state.lastLat !== null && state.lastLng !== null) {
+                state.totalDistance += getDistance(state.lastLat, state.lastLng, lat, lng);
+            }
+
+            state.lastLat = lat;
+            state.lastLng = lng;
+
+            const payload = {
+                latitude: lat,
+                longitude: lng,
+                accuracy: position.coords.accuracy,
+                speed: position.coords.speed,
+                heading: position.coords.heading,
+                source: 'browser',
+                distance: state.totalDistance,
+            };
+
+            state.lastPayload = payload;
+            console.log("GPS:", payload);
+
+            try {
+                const result = await postJson('/salesperson_tracking/update', payload);
+                refreshMetrics(payload, result);
+            } catch (e) {
+                setNotice('warning', 'Update failed', e.message);
+            }
+
+        }, (err) => {
+            setNotice('warning', 'GPS error', err.message || 'GPS error');
+        }, GPS_OPTS);
     };
 
     const startTracking = async () => {
         if (!navigator.geolocation) {
-            setNotice('danger', 'Not supported', ' This browser does not support geolocation.');
+            setNotice('danger', 'Not supported', 'Geolocation not supported');
             return;
         }
+
         if (state.tracking) return;
 
-        state.tracking          = true;
+        state.tracking = true;
         el.startButton.disabled = true;
-        updateStatus('live', 'Starting…');
-        state.trackingStart            = Date.now();
-        el.takingTimeValue.textContent = '00:00';
-        state.timerId                  = setInterval(tickTimer, 1000);
 
-   
+        updateStatus('live', 'Starting...');
+        state.trackingStart = Date.now();
+
+        state.timerId = setInterval(tickTimer, 1000);
         localStorage.setItem('isTracking', 'true');
         localStorage.setItem('trackingStart', state.trackingStart);
 
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const payload = {
-                    latitude:  position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    accuracy:  position.coords.accuracy,
-                    speed:     position.coords.speed,
-                    heading:   position.coords.heading,
-                    source:    'browser',
-                };
-                state.lastPayload = payload;
-
-                try {
-                    const result = await postJson('/salesperson_tracking/update', payload);
-                    refreshMetrics(payload, result);
-                    setNotice('success', 'Tracking active',
-                        ' Odoo is receiving fresh GPS points from this device.');
-                } catch (e) {
-                    setNotice('danger', 'Update failed', ' ' + e.message);
-                }
-            },
-            (err) => {
-                state.tracking          = false;
-                el.startButton.disabled = false;
-                if (state.timerId !== null) { clearInterval(state.timerId); state.timerId = null; }
-                state.trackingStart            = null;
-                el.takingTimeValue.textContent = '—';
-                updateStatus('offline', 'Offline');
-                setNotice('danger', 'Permission needed', ' ' + (err.message || 'GPS access was denied.'));
-            },
-            GPS_OPTS
-        );
-
         state.intervalId = setInterval(fetchAndSend, INTERVAL_MS);
+        fetchAndSend();
     };
 
     const stopTracking = async () => {
         state.tracking = false;
 
-        if (state.intervalId !== null) { clearInterval(state.intervalId); state.intervalId = null; }
-        if (state.timerId    !== null) { clearInterval(state.timerId);    state.timerId    = null; }
+        if (state.intervalId) clearInterval(state.intervalId);
+        if (state.timerId) clearInterval(state.timerId);
 
-        const durationSeconds = state.trackingStart
-            ? Math.floor((Date.now() - state.trackingStart) / 1000)
-            : 0;
+        state.intervalId = null;
+        state.timerId = null;
 
-        localStorage.removeItem('isTracking');
-        localStorage.removeItem('trackingStart');
-
-        state.trackingStart            = null;
-        el.takingTimeValue.textContent = '—';
-        el.startButton.disabled        = false;
-
-        try {
-            await postJson('/salesperson_tracking/stop', { duration_seconds: durationSeconds });
-        } catch (e) {
-            setNotice('warning', 'Stop warning', ' ' + e.message);
-        }
+        el.startButton.disabled = false;
+        state.trackingStart = null;
 
         updateStatus('offline', 'Offline');
-        setNotice('', 'Tracking stopped', ' This device is no longer sending live position updates.');
+        setNotice('', 'Stopped', 'Tracking stopped');
     };
 
-
     const autoResumeTracking = () => {
-        const isTracking = localStorage.getItem('isTracking');
-
-        if (isTracking === 'true') {
+        if (localStorage.getItem('isTracking') === 'true') {
             state.tracking = true;
             state.trackingStart = parseInt(localStorage.getItem('trackingStart'));
 
@@ -230,13 +207,8 @@
         }
     };
 
-    el.startButton.addEventListener('click', () =>
-        startTracking().catch((e) => setNotice('danger', 'Start failed', ' ' + e.message)));
-
-    el.stopButton.addEventListener('click', () =>
-        stopTracking().catch((e) => setNotice('danger', 'Stop failed', ' ' + e.message)));
-
-  
+    el.startButton.addEventListener('click', startTracking);
+    el.stopButton.addEventListener('click', stopTracking);
 
     window.addEventListener('load', autoResumeTracking);
 

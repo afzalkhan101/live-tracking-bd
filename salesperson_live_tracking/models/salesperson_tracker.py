@@ -71,7 +71,7 @@ class SalespersonTracker(models.Model):
     last_tracking_duration = fields.Integer(string="Last Session Duration (sec)", default=0)
     route_deviation_alert  = fields.Boolean(string="Route Deviation Alert", default=False)
     last_alert_sent        = fields.Datetime(string="Last Alert Sent")
-
+    total_distance_km = fields.Float(string="Total Distance (KM)", default=0.0)
     priority = fields.Selection([
         ("0", "Normal"), ("1", "High"), ("2", "Urgent")
     ], default="0")
@@ -91,14 +91,17 @@ class SalespersonTracker(models.Model):
     stay_minutes  = fields.Float(compute='_compute_stay', store=True)
     radius_meters = fields.Float(default=100.0)
     visit_date    = fields.Date(required=True, tracking=True, default=fields.Date.context_today)
-
+    stay_display = fields.Char(
+    string="Stay Duration",
+    compute="_compute_stay_display",
+    store=True
+    )
+    
     expense_transport = fields.Float()
     expense_food      = fields.Float()
     expense_other     = fields.Float()
     total_expense     = fields.Float(compute='_compute_total_expense', store=True)
-
     note = fields.Html(string="Internal Note", sanitize=True, tracking=True)
-
 
     last_tracking_display = fields.Char(
         string="Last Session Duration (H:M:S)",
@@ -116,6 +119,16 @@ class SalespersonTracker(models.Model):
             secs = seconds % 60
 
             rec.last_tracking_display = f"{hours:02d}:{minutes:02d}:{secs:02d}"
+    @api.depends('stay_minutes')
+    def _compute_stay_display(self):
+        for rec in self:
+            total_seconds = int((rec.stay_minutes or 0) * 60)
+
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+
+            rec.stay_display = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
    
     @api.depends("today_plan_count", "today_covered_count")
@@ -300,8 +313,9 @@ class SalespersonTracker(models.Model):
         return True
     
     def update_live_location(
-        self, latitude, longitude,
-        accuracy=None, speed=None, heading=None, source="browser"
+    self, latitude, longitude,
+    accuracy=None, speed=None, heading=None,
+    source="browser", distance=0.0
     ):
         self.ensure_one()
         accuracy_value = accuracy or 0.0
@@ -312,6 +326,9 @@ class SalespersonTracker(models.Model):
                 self._reverse_geocode_location(latitude, longitude) or self.location_name
             )
 
+        
+        print("EEEEEEEEEEEEEEEEEEEEEE$R#$#$#$#$#$#$", distance)
+
         self.write({
             "is_tracking":   True,
             "last_seen":     fields.Datetime.now(),
@@ -319,6 +336,7 @@ class SalespersonTracker(models.Model):
             "last_speed":    speed   or 0.0,
             "last_heading":  heading or 0.0,
             "location_name": location_name,
+            "total_distance_km": (self.total_distance_km or 0.0) + (distance or 0.0),
         })
 
         if self.partner_id:

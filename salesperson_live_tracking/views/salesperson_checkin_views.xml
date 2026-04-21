@@ -22,8 +22,7 @@
             </list>
         </field>
     </record>
-
-    <!-- Check-In Form View -->
+    
     <record id="view_salesperson_checkin_form" model="ir.ui.view">
         <field name="name">salesperson.checkin.form</field>
         <field name="model">salesperson.checkin</field>

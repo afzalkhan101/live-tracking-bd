@@ -308,9 +308,9 @@
                             <field name="checkout_time"/>
                         </group>
 
-                        <group>
-                            <field name="stay_minutes" readonly="1"/>
-                        </group>
+                        <div class="stay-big text-primary">
+                            Stay: <field name="stay_display"/>
+                        </div>
                     </group>
 
                     <group string="Expenses">
@@ -325,8 +325,9 @@
                             </group>
                     </group>
 
-                    <group string="TEST Fields">
+                    <group string="Tracking Related informations">
                         <field name="last_tracking_display"/>
+                        <field name="total_distance_km"/>
                     </group>
 
 
