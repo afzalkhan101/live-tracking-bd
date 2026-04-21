@@ -258,17 +258,19 @@ class SalespersonTracker(models.Model):
     def action_set_done(self):
         self.filtered(lambda r: r.state == 'visited').write({'state': 'done'})
 
-    # ── Stop tracking ─────────────────────────────────────────────────────────
 
     def action_stop_tracking(self, duration_seconds):
         self.ensure_one()
+
         if duration_seconds < 0:
             duration_seconds = 0
+
+        total_duration = (self.last_tracking_duration or 0) + duration_seconds
 
         self.write({
             "is_tracking":            False,
             "last_tracking_start":    False,
-            "last_tracking_duration": duration_seconds,
+            "last_tracking_duration": total_duration,
         })
 
         today = fields.Date.context_today(self)
@@ -276,12 +278,10 @@ class SalespersonTracker(models.Model):
             ("user_id",    "=", self.user_id.id),
             ("visit_date", "=", today),
         ], limit=1)
-
         if plan:
-            plan._apply_tracking_duration(duration_seconds)
+            plan._apply_tracking_duration(duration_seconds)  
         return True
-
-   
+    
     def update_live_location(
         self, latitude, longitude,
         accuracy=None, speed=None, heading=None, source="browser"
