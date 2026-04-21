@@ -448,6 +448,7 @@ class SalespersonTrackingController(http.Controller):
 
 
 class SalespersonDashboard(http.Controller):
-    @http.route('/salesperson/dashboard', type='http', auth='user', website=False)
+
+    @http.route('/salesperson/dashboard', type='http', auth='user', website=True)
     def dashboard(self, **kwargs):
         return request.render('salesperson_live_tracking.salesperson_dashboard', {})

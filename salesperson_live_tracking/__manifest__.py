@@ -13,6 +13,7 @@
         "views/salesperson_kpi_views.xml",
         "views/res_users_views.xml",
         "views/templates.xml",
+        "views/dashboard_template.xml",
         "data/mail_template_data.xml",
     ],
     "assets": {

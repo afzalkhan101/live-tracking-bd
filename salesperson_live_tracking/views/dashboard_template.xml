@@ -1,0 +1,458 @@
+<odoo>
+  <template id="salesperson_dashboard" name="Salesperson Live Tracking Dashboard">
+    <t t-call="web.layout">
+
+      <!-- HEAD (unchanged) -->
+      <t t-set="head">
+        <link rel="preconnect" href="https://fonts.googleapis.com"/>
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&amp;family=DM+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+        <link href="/salesperson_live_tracking/static/src/css/style.css" rel="stylesheet"/>
+      </t>
+
+      <!-- BODY CONTENT (no t-set="body") -->
+      <div class="layout">
+          <!-- Sidebar -->
+          <nav class="sidebar">
+            <div class="logo">&#128205;</div>
+            <div class="nav-item active" data-tip="Dashboard">&#128506;</div>
+            <div class="nav-item" data-tip="Salespersons">&#128101;</div>
+            <div class="nav-item" data-tip="Visit Plans">&#128203;</div>
+            <div class="nav-item" data-tip="Check-ins">&#9989;</div>
+            <div class="nav-item" data-tip="KPIs">&#128202;</div>
+            <div class="nav-item" data-tip="Reports">&#128196;</div>
+            <div class="sidebar-bottom">
+              <div class="nav-item" data-tip="Settings">&#9881;</div>
+              <div class="avatar" data-tip="Admin">AD</div>
+            </div>
+          </nav>
+
+          <!-- Main -->
+          <div class="main">
+
+            <!-- Topbar -->
+            <header class="topbar">
+              <h1>Live Tracking Dashboard</h1>
+              <div class="topbar-badge" id="live-badge">6 Active Now</div>
+              <div class="search-box">
+                <span>&#128269;</span>
+                <input type="text" placeholder="Search salesperson&#8230;"/>
+              </div>
+              <div class="icon-btn" data-tip="Refresh">&#128260;</div>
+              <div class="icon-btn" data-tip="Notifications">&#128276;</div>
+            </header>
+
+            <!-- Content -->
+            <div class="content">
+
+              <!-- Stat cards -->
+              <div class="stat-row">
+                <div class="stat-card blue">
+                  <div class="stat-label">Total Field Reps</div>
+                  <div class="stat-value">24</div>
+                  <div class="stat-icon">&#128100;</div>
+                  <div class="delta up">&#9650; 3 this month</div>
+                </div>
+                <div class="stat-card green">
+                  <div class="stat-label">Live Right Now</div>
+                  <div class="stat-value" style="color:var(--live)">6</div>
+                  <div class="stat-icon">&#128994;</div>
+                  <div class="stat-sub">4 idle &#183; 14 offline</div>
+                </div>
+                <div class="stat-card warn">
+                  <div class="stat-label">Today's Visits Planned</div>
+                  <div class="stat-value" style="color:var(--warn)">42</div>
+                  <div class="stat-icon">&#128203;</div>
+                  <div class="delta up">&#9650; 28 covered</div>
+                </div>
+                <div class="stat-card red">
+                  <div class="stat-label">Route Deviation Alerts</div>
+                  <div class="stat-value" style="color:var(--danger)">3</div>
+                  <div class="stat-icon">&#9888;</div>
+                  <div class="delta down">&#9660; 2 pending review</div>
+                </div>
+              </div>
+
+              <!-- Mid grid -->
+              <div class="mid-grid">
+
+                <!-- Map card -->
+                <div class="map-card">
+                  <div class="card-header">
+                    <h2>Live Field Map</h2>
+                    <span class="chip live">6 Live</span>
+                    <span class="chip idle">4 Idle</span>
+                    <span class="chip offline">14 Offline</span>
+                  </div>
+                  <div class="map-container">
+                    <svg class="map-svg" viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                        </pattern>
+                        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stop-color="#4f8ef7"/>
+                          <stop offset="100%" stop-color="#6ee7b7"/>
+                        </linearGradient>
+                      </defs>
+                      <rect width="700" height="320" fill="#13161e"/>
+                      <rect width="700" height="320" fill="url(#grid)"/>
+                      <!-- Roads -->
+                      <rect x="0" y="140" width="700" height="14" fill="rgba(255,255,255,0.04)" rx="2"/>
+                      <rect x="320" y="0" width="14" height="320" fill="rgba(255,255,255,0.04)" rx="2"/>
+                      <rect x="0" y="240" width="700" height="8" fill="rgba(255,255,255,0.025)" rx="2"/>
+                      <rect x="500" y="0" width="8" height="320" fill="rgba(255,255,255,0.025)" rx="2"/>
+                      <rect x="120" y="0" width="8" height="320" fill="rgba(255,255,255,0.025)" rx="2"/>
+                      <!-- Blocks -->
+                      <rect x="30"  y="20"  width="80"  height="110" fill="rgba(79,142,247,.05)" rx="4"/>
+                      <rect x="140" y="20"  width="165" height="110" fill="rgba(79,142,247,.04)" rx="4"/>
+                      <rect x="340" y="20"  width="145" height="110" fill="rgba(79,142,247,.04)" rx="4"/>
+                      <rect x="530" y="20"  width="150" height="110" fill="rgba(79,142,247,.04)" rx="4"/>
+                      <rect x="30"  y="164" width="80"  height="60"  fill="rgba(79,142,247,.04)" rx="4"/>
+                      <rect x="140" y="164" width="165" height="60"  fill="rgba(79,142,247,.04)" rx="4"/>
+                      <rect x="340" y="164" width="145" height="60"  fill="rgba(79,142,247,.04)" rx="4"/>
+                      <rect x="530" y="164" width="150" height="60"  fill="rgba(79,142,247,.04)" rx="4"/>
+                      <!-- Route lines -->
+                      <polyline points="100,147 200,147 327,100 327,20" fill="none" stroke="rgba(79,142,247,.3)"   stroke-width="2" stroke-dasharray="6 4"/>
+                      <polyline points="420,147 500,60"                  fill="none" stroke="rgba(110,231,183,.2)" stroke-width="2" stroke-dasharray="6 4"/>
+                      <!-- Live pins -->
+                      <g transform="translate(100,130)">
+                        <circle r="12" fill="rgba(34,197,94,.15)" stroke="#22c55e" stroke-width="1.5"/>
+                        <circle r="5"  fill="#22c55e"/>
+                        <circle r="14" fill="none" stroke="rgba(34,197,94,.4)" stroke-width="1">
+                          <animate attributeName="r"       values="12;20;12" dur="2s"   repeatCount="indefinite"/>
+                          <animate attributeName="opacity" values="0.5;0;0.5" dur="2s"   repeatCount="indefinite"/>
+                        </circle>
+                      </g>
+                      <g transform="translate(200,147)">
+                        <circle r="12" fill="rgba(34,197,94,.15)" stroke="#22c55e" stroke-width="1.5"/>
+                        <circle r="5"  fill="#22c55e"/>
+                        <circle r="14" fill="none" stroke="rgba(34,197,94,.4)" stroke-width="1">
+                          <animate attributeName="r"       values="12;20;12" dur="2.4s" repeatCount="indefinite"/>
+                          <animate attributeName="opacity" values="0.5;0;0.5" dur="2.4s" repeatCount="indefinite"/>
+                        </circle>
+                      </g>
+                      <g transform="translate(420,147)">
+                        <circle r="12" fill="rgba(34,197,94,.15)" stroke="#22c55e" stroke-width="1.5"/>
+                        <circle r="5"  fill="#22c55e"/>
+                      </g>
+                      <g transform="translate(580,60)">
+                        <circle r="12" fill="rgba(34,197,94,.15)" stroke="#22c55e" stroke-width="1.5"/>
+                        <circle r="5"  fill="#22c55e"/>
+                      </g>
+                      <g transform="translate(60,200)">
+                        <circle r="12" fill="rgba(34,197,94,.15)" stroke="#22c55e" stroke-width="1.5"/>
+                        <circle r="5"  fill="#22c55e"/>
+                      </g>
+                      <g transform="translate(340,260)">
+                        <circle r="12" fill="rgba(34,197,94,.15)" stroke="#22c55e" stroke-width="1.5"/>
+                        <circle r="5"  fill="#22c55e"/>
+                      </g>
+                      <!-- Idle pins -->
+                      <g transform="translate(327,60)">
+                        <circle r="10" fill="rgba(245,158,11,.15)" stroke="#f59e0b" stroke-width="1.5"/>
+                        <circle r="4"  fill="#f59e0b"/>
+                      </g>
+                      <g transform="translate(500,200)">
+                        <circle r="10" fill="rgba(245,158,11,.15)" stroke="#f59e0b" stroke-width="1.5"/>
+                        <circle r="4"  fill="#f59e0b"/>
+                      </g>
+                      <g transform="translate(155,200)">
+                        <circle r="10" fill="rgba(245,158,11,.15)" stroke="#f59e0b" stroke-width="1.5"/>
+                        <circle r="4"  fill="#f59e0b"/>
+                      </g>
+                      <!-- Labels -->
+                      <text x="108" y="120" fill="white" font-size="9" font-family="DM Sans" opacity=".7">Karim</text>
+                      <text x="208" y="137" fill="white" font-size="9" font-family="DM Sans" opacity=".7">Rahim</text>
+                      <text x="428" y="137" fill="white" font-size="9" font-family="DM Sans" opacity=".7">Sadia</text>
+                      <text x="588" y="50"  fill="white" font-size="9" font-family="DM Sans" opacity=".7">Nabil</text>
+                    </svg>
+                    <div class="map-overlay">
+                      <strong>Dhaka Metro</strong><br/>Last refresh: just now
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Activity feed -->
+                <div class="activity-card">
+                  <div class="card-header">
+                    <h2>Live Activity</h2>
+                    <span style="font-size:11px;color:var(--muted)">Today</span>
+                  </div>
+                  <div class="activity-list">
+                    <div class="activity-item">
+                      <div class="activity-dot" style="background:var(--live)"></div>
+                      <div class="activity-text">
+                        <div class="activity-name">Karim H.</div>
+                        <div class="activity-desc">Checked in at Motijheel Branch</div>
+                      </div>
+                      <div class="activity-time">09:42</div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="activity-dot" style="background:var(--warn)"></div>
+                      <div class="activity-text">
+                        <div class="activity-name">Nabil R.</div>
+                        <div class="activity-desc">Route deviation &#8212; 2.4 km off plan</div>
+                      </div>
+                      <div class="activity-time">09:38</div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="activity-dot" style="background:var(--accent2)"></div>
+                      <div class="activity-text">
+                        <div class="activity-name">Sadia M.</div>
+                        <div class="activity-desc">Visit marked done &#183; Deal Closed &#10003;</div>
+                      </div>
+                      <div class="activity-time">09:31</div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="activity-dot" style="background:var(--accent)"></div>
+                      <div class="activity-text">
+                        <div class="activity-name">Rahim U.</div>
+                        <div class="activity-desc">Tracking started &#183; Mirpur-10</div>
+                      </div>
+                      <div class="activity-time">09:15</div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="activity-dot" style="background:var(--danger)"></div>
+                      <div class="activity-text">
+                        <div class="activity-name">Farhan K.</div>
+                        <div class="activity-desc">Checked out &#8212; stayed 48 min</div>
+                      </div>
+                      <div class="activity-time">09:08</div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="activity-dot" style="background:var(--muted)"></div>
+                      <div class="activity-text">
+                        <div class="activity-name">Tania B.</div>
+                        <div class="activity-desc">Visit plan submitted (5 stops)</div>
+                      </div>
+                      <div class="activity-time">08:55</div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="activity-dot" style="background:var(--live)"></div>
+                      <div class="activity-text">
+                        <div class="activity-name">Zubayr A.</div>
+                        <div class="activity-desc">New check-in &#183; Gulshan 2</div>
+                      </div>
+                      <div class="activity-time">08:49</div>
+                    </div>
+                  </div>
+                </div>
+
+              </div><!-- /mid-grid -->
+
+              <!-- Bottom grid -->
+              <div class="bottom-grid">
+
+                <!-- Table -->
+                <div class="table-card">
+                  <div class="card-header">
+                    <h2>Field Representatives</h2>
+                    <span style="font-size:11px;color:var(--muted)">24 total</span>
+                  </div>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Representative</th>
+                        <th>Status</th>
+                        <th>Stage</th>
+                        <th>Coverage</th>
+                        <th>Distance</th>
+                        <th>Last Seen</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <div class="user-cell">
+                            <div class="user-avatar" style="background:linear-gradient(135deg,#4f8ef7,#6ee7b7)">KH</div>
+                            <div><div class="user-name">Karim Hossain</div><div class="user-team">Dhaka North</div></div>
+                          </div>
+                        </td>
+                        <td><span class="status-dot live">Live</span></td>
+                        <td><span class="state-badge state-accepted">Accepted</span></td>
+                        <td>
+                          <div style="display:flex;align-items:center;gap:8px;">
+                            <div class="progress-bar"><div class="progress-fill" style="width:86%"></div></div>
+                            <span class="mono" style="font-size:11px;">6/7</span>
+                          </div>
+                        </td>
+                        <td class="mono">12.4 km</td>
+                        <td class="mono" style="color:var(--muted)">just now</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <div class="user-cell">
+                            <div class="user-avatar" style="background:linear-gradient(135deg,#f59e0b,#f87171)">RU</div>
+                            <div><div class="user-name">Rahim Uddin</div><div class="user-team">Mirpur</div></div>
+                          </div>
+                        </td>
+                        <td><span class="status-dot live">Live</span></td>
+                        <td><span class="state-badge state-accepted">Accepted</span></td>
+                        <td>
+                          <div style="display:flex;align-items:center;gap:8px;">
+                            <div class="progress-bar"><div class="progress-fill warn" style="width:50%"></div></div>
+                            <span class="mono" style="font-size:11px;">3/6</span>
+                          </div>
+                        </td>
+                        <td class="mono">7.1 km</td>
+                        <td class="mono" style="color:var(--muted)">2 min ago</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <div class="user-cell">
+                            <div class="user-avatar" style="background:linear-gradient(135deg,#6ee7b7,#4f8ef7)">SM</div>
+                            <div><div class="user-name">Sadia Mim</div><div class="user-team">Gulshan</div></div>
+                          </div>
+                        </td>
+                        <td><span class="status-dot live">Live</span></td>
+                        <td><span class="state-badge state-done">Done</span></td>
+                        <td>
+                          <div style="display:flex;align-items:center;gap:8px;">
+                            <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+                            <span class="mono" style="font-size:11px;">5/5</span>
+                          </div>
+                        </td>
+                        <td class="mono">18.9 km</td>
+                        <td class="mono" style="color:var(--muted)">4 min ago</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <div class="user-cell">
+                            <div class="user-avatar" style="background:linear-gradient(135deg,#a78bfa,#f87171)">NR</div>
+                            <div><div class="user-name">Nabil Rahman</div><div class="user-team">Uttara</div></div>
+                          </div>
+                        </td>
+                        <td><span class="status-dot idle">Idle</span></td>
+                        <td><span class="state-badge state-planned">Planned</span></td>
+                        <td>
+                          <div style="display:flex;align-items:center;gap:8px;">
+                            <div class="progress-bar"><div class="progress-fill danger" style="width:25%"></div></div>
+                            <span class="mono" style="font-size:11px;">1/4</span>
+                          </div>
+                        </td>
+                        <td class="mono">3.2 km</td>
+                        <td class="mono" style="color:var(--muted)">18 min ago</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <div class="user-cell">
+                            <div class="user-avatar" style="background:linear-gradient(135deg,#34d399,#60a5fa)">FK</div>
+                            <div><div class="user-name">Farhan Khan</div><div class="user-team">Dhanmondi</div></div>
+                          </div>
+                        </td>
+                        <td><span class="status-dot offline">Offline</span></td>
+                        <td><span class="state-badge state-rejected">Rejected</span></td>
+                        <td>
+                          <div style="display:flex;align-items:center;gap:8px;">
+                            <div class="progress-bar"><div class="progress-fill danger" style="width:0%"></div></div>
+                            <span class="mono" style="font-size:11px;">0/3</span>
+                          </div>
+                        </td>
+                        <td class="mono">0.0 km</td>
+                        <td class="mono" style="color:var(--muted)">2 hrs ago</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <div class="user-cell">
+                            <div class="user-avatar" style="background:linear-gradient(135deg,#fbbf24,#a78bfa)">ZA</div>
+                            <div><div class="user-name">Zubayr Alam</div><div class="user-team">Gulshan</div></div>
+                          </div>
+                        </td>
+                        <td><span class="status-dot live">Live</span></td>
+                        <td><span class="state-badge state-accepted">Accepted</span></td>
+                        <td>
+                          <div style="display:flex;align-items:center;gap:8px;">
+                            <div class="progress-bar"><div class="progress-fill" style="width:67%"></div></div>
+                            <span class="mono" style="font-size:11px;">4/6</span>
+                          </div>
+                        </td>
+                        <td class="mono">9.7 km</td>
+                        <td class="mono" style="color:var(--muted)">1 min ago</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- KPI donut -->
+                <div class="kpi-card">
+                  <div class="card-header">
+                    <h2>Today's KPI</h2>
+                    <span style="font-size:11px;color:var(--muted)">April 21</span>
+                  </div>
+                  <div class="donut-wrap">
+                    <svg class="donut-svg" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stop-color="#4f8ef7"/>
+                          <stop offset="100%" stop-color="#6ee7b7"/>
+                        </linearGradient>
+                      </defs>
+                      <circle cx="70" cy="70" r="52" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="18"/>
+                      <circle cx="70" cy="70" r="52" fill="none"
+                        stroke="url(#grad1)" stroke-width="18"
+                        stroke-dasharray="218 108.7" stroke-dashoffset="81.7"
+                        stroke-linecap="round" transform="rotate(-90 70 70)"/>
+                      <circle cx="70" cy="70" r="52" fill="none"
+                        stroke="#f59e0b" stroke-width="18"
+                        stroke-dasharray="40 286.7" stroke-dashoffset="-137"
+                        stroke-linecap="round" transform="rotate(-90 70 70)" opacity=".85"/>
+                      <circle cx="70" cy="70" r="52" fill="none"
+                        stroke="#f87171" stroke-width="18"
+                        stroke-dasharray="68.7 258" stroke-dashoffset="-177"
+                        stroke-linecap="round" transform="rotate(-90 70 70)" opacity=".7"/>
+                      <text x="70" y="63" text-anchor="middle" fill="white" font-size="22" font-weight="700" font-family="DM Mono">67%</text>
+                      <text x="70" y="80" text-anchor="middle" fill="#6b7280" font-size="9"  font-family="DM Sans">completion</text>
+                    </svg>
+                    <div class="kpi-legend">
+                      <div class="kpi-legend-item">
+                        <div class="legend-left"><span class="legend-dot" style="background:#4f8ef7"></span>Visits Covered</div>
+                        <div class="legend-val" style="color:#4f8ef7">28</div>
+                      </div>
+                      <div class="kpi-legend-item">
+                        <div class="legend-left"><span class="legend-dot" style="background:#f59e0b"></span>In Progress</div>
+                        <div class="legend-val" style="color:#f59e0b">6</div>
+                      </div>
+                      <div class="kpi-legend-item">
+                        <div class="legend-left"><span class="legend-dot" style="background:#f87171"></span>Missed</div>
+                        <div class="legend-val" style="color:#f87171">8</div>
+                      </div>
+                      <div class="kpi-legend-item">
+                        <div class="legend-left"><span class="legend-dot" style="background:#6b7280"></span>Total Planned</div>
+                        <div class="legend-val">42</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="expense-row">
+                    <div class="exp-item">
+                      <div class="exp-label">Transport</div>
+                      <div class="exp-val" style="color:#4f8ef7">&#2547;4.2k</div>
+                    </div>
+                    <div class="exp-item">
+                      <div class="exp-label">Food</div>
+                      <div class="exp-val" style="color:#6ee7b7">&#2547;1.8k</div>
+                    </div>
+                    <div class="exp-item">
+                      <div class="exp-label">Other</div>
+                      <div class="exp-val" style="color:#f59e0b">&#2547;0.6k</div>
+                    </div>
+                  </div>
+                </div>
+
+              </div><!-- /bottom-grid -->
+            </div><!-- /content -->
+          </div><!-- /main -->
+        <script>
+          document.querySelectorAll('.nav-item').forEach(function(el) {
+            el.addEventListener('click', function() {
+              document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+              el.classList.add('active');
+            });
+          });
+        </script>
+
+      </div> 
+
+    </t>
+  </template>
+
+</odoo>
