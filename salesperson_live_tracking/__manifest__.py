@@ -16,12 +16,11 @@
         "data/mail_template_data.xml",
     ],
     "assets": {
-        # Backend assets (Odoo web client — menus, list/form views, etc.)
         "web.assets_backend": [
             "salesperson_live_tracking/static/src/scss/style.css",
             "salesperson_live_tracking/static/src/css/style.css",
+            # "salesperson_live_tracking/static/src/xml/dashboard.xml",
         ],
-        # Frontend assets (public portal pages — live tracking & moving map templates)
         "web.assets_frontend": [
             "salesperson_live_tracking/static/src/css/live_tracking.css",
             "salesperson_live_tracking/static/src/css/moving_map.css",

@@ -447,3 +447,11 @@ class SalespersonTrackingController(http.Controller):
             "total_logs": len(location_points),
         }
         return request.render("salesperson_live_tracking.moving_map_page", values)
+
+
+
+class SalespersonDashboard(http.Controller):
+
+    @http.route('/salesperson/dashboard', type='http', auth='user', website=False)
+    def dashboard(self, **kwargs):
+        return request.render('salesperson_live_tracking.salesperson_dashboard', {})
