@@ -27,6 +27,7 @@
             "salesperson_live_tracking/static/src/css/moving_map.css",
             "salesperson_live_tracking/static/src/js/live_tracking.js",
             "salesperson_live_tracking/static/src/js/moving_map.js",
+            "salesperson_live_tracking/static/src/js/camera_wdigts.js",
         ],
     },
     "application": False,
