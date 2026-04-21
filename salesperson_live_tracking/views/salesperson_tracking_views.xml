@@ -325,7 +325,7 @@
                     </group>
 
                     <group string="TEST Fields">
-                        <field name="last_tracking_duration"/>
+                        <field name="last_tracking_display"/>
                     </group>
 
 

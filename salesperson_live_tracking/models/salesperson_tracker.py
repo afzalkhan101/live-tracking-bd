@@ -99,6 +99,24 @@ class SalespersonTracker(models.Model):
 
     note = fields.Html(string="Internal Note", sanitize=True, tracking=True)
 
+
+    last_tracking_display = fields.Char(
+        string="Last Session Duration (H:M:S)",
+        compute="_compute_last_tracking_display",
+        store=True
+    )
+
+    @api.depends('last_tracking_duration')
+    def _compute_last_tracking_display(self):
+        for rec in self:
+            seconds = rec.last_tracking_duration or 0
+
+            hours = seconds // 3600
+            minutes = (seconds % 3600) // 60
+            secs = seconds % 60
+
+            rec.last_tracking_display = f"{hours:02d}:{minutes:02d}:{secs:02d}"
+
    
     @api.depends("today_plan_count", "today_covered_count")
     def _compute_coverage_color(self):
@@ -233,8 +251,7 @@ class SalespersonTracker(models.Model):
                 tracker.today_visit_summary       = summary or False
                 tracker.kpi_visit_completion_rate = completion_rate
 
-    # ── State actions ─────────────────────────────────────────────────────────
-
+  
     def action_set_planned(self):
         self.filtered(lambda r: r.state in ('accepted', 'visited')).write({'state': 'planned'})
 
