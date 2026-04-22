@@ -1,13 +1,8 @@
 (function () {
     'use strict';
-
-    /* ══════════════════════════════════════════════
-       INIT — wait for DOM to be ready
-       Works on both HTTP (localhost) and HTTPS
-    ══════════════════════════════════════════════ */
     function init() {
         const openBtn      = document.getElementById('openCameraBtn');
-        if (!openBtn) return;   // element nai, exit
+        if (!openBtn) return;  
 
         const video        = document.getElementById('selfieVideo');
         const canvas       = document.getElementById('selfieCanvas');
@@ -33,33 +28,23 @@
         let facingMode   = 'environment';
         let photos       = [];
         let viewingIndex = -1;
-
-        /* ══════════════════════════════════════════════
-           HTTPS / localhost CHECK
-           Camera API requires secure context.
-           localhost is always treated as secure by browsers.
-        ══════════════════════════════════════════════ */
         function isSecureContext() {
             return (
-                window.isSecureContext === true ||               // modern browsers
+                window.isSecureContext === true ||               
                 location.protocol === 'https:' ||
                 location.hostname === 'localhost' ||
                 location.hostname === '127.0.0.1' ||
-                location.hostname === '[::1]'                   // IPv6 localhost
+                location.hostname === '[::1]'                  
             );
         }
 
-        /* ══════════════════════════════════════════════
-           CAMERA — start
-        ══════════════════════════════════════════════ */
         async function startCamera(facing) {
-            // Secure context check
+
             if (!isSecureContext()) {
                 camLabel.textContent = ' Camera requires HTTPS or localhost. Please use a secure connection.';
                 return;
             }
 
-            // getUserMedia support check
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 camLabel.textContent = ' Your browser does not support camera access.';
                 return;
@@ -102,7 +87,7 @@
                 } else if (e.name === 'NotReadableError' || e.name === 'TrackStartError') {
                     camLabel.textContent = ' Camera is in use by another app. Please close it and try again.';
                 } else if (e.name === 'OverconstrainedError') {
-                    // Retry with minimal constraints
+                 
                     try {
                         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
                         video.srcObject          = stream;
