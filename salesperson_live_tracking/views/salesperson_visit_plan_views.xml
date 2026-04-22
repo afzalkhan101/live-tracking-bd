@@ -305,7 +305,7 @@
             groups="sales_team.group_sale_manager"/>
 
     <menuitem id="menu_salesperson_visit_plan_my"
-            name="SendPlanned Visits"
+            name="Send Planned Visits"
             parent="menu_salesperson_tracking_root"
             action="action_salesperson_visit_plan_my"
             sequence="1"

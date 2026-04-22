@@ -1,12 +1,3 @@
-/* =============================================================
-   salesperson_live_tracking — DASHBOARD / FRONTEND STYLES
-   Loaded via: web.assets_frontend
-   ✅ Safe to use body/html/footer overrides here because these
-      styles only load on website/portal routes, NOT the backend.
-   ============================================================= */
-
-
-/* ── CSS Variables ──────────────────────────────────────────── */
 
 :root {
     --sp-bg:       #f5f7fa;
@@ -24,20 +15,6 @@
     --sp-radius-sm: 8px;
 }
 
-
-/* ── Dashboard Page Scope ───────────────────────────────────── */
-/*
-   All rules below that need to reset browser/Odoo chrome are
-   scoped to .sp-dashboard-page (added to <body> or wrapper in
-   your QWeb template) — so they NEVER bleed into backend pages.
-
-   Rules that only use custom classes (.layout, .sidebar, etc.)
-   are already safe and need no extra scoping.
-*/
-
-/* Hide Odoo website chrome for the fullscreen dashboard.
-   ⚠ "footer" bare selector REMOVED — it was hiding dialog buttons.
-      Use .website-footer or body > footer if you need it. */
 .sp-dashboard-page #wrapwrap,
 .sp-dashboard-page .o_website_preview,
 .sp-dashboard-page header.o_top_fixed_element,
@@ -61,14 +38,10 @@
 }
 
 
-/* ── Scrollbar ──────────────────────────────────────────────── */
-
 .layout ::-webkit-scrollbar         { width: 6px; }
 .layout ::-webkit-scrollbar-track   { background: var(--sp-bg); }
 .layout ::-webkit-scrollbar-thumb   { background: var(--sp-surface2); border-radius: 4px; }
 
-
-/* ── Layout Shell ───────────────────────────────────────────── */
 
 .layout {
     display: flex;
@@ -81,9 +54,6 @@
 .layout *, .layout *::before, .layout *::after {
     box-sizing: border-box;
 }
-
-
-/* ── Sidebar ────────────────────────────────────────────────── */
 
 .sidebar {
     width: 64px;
@@ -158,8 +128,6 @@
 }
 
 
-/* ── Main Column ────────────────────────────────────────────── */
-
 .main {
     margin-left: 64px;
     flex: 1;
@@ -170,8 +138,6 @@
     min-width: 0;
 }
 
-
-/* ── Topbar ─────────────────────────────────────────────────── */
 
 .topbar {
     height: 60px;
@@ -241,8 +207,6 @@
 .icon-btn:hover { color: var(--sp-text); }
 
 
-/* ── Scrollable Content ─────────────────────────────────────── */
-
 .content {
     flex: 1;
     min-height: 0;
@@ -250,8 +214,6 @@
     padding: 24px 28px;
 }
 
-
-/* ── Stat Cards ─────────────────────────────────────────────── */
 
 .stat-row {
     display: grid;
@@ -303,7 +265,7 @@
 .delta.down { color: var(--sp-danger); }
 
 
-/* ── Mid Grid ───────────────────────────────────────────────── */
+
 
 .mid-grid {
     display: grid;
@@ -312,8 +274,6 @@
     margin-bottom: 24px;
 }
 
-
-/* ── Card Header ────────────────────────────────────────────── */
 
 .card-header {
     display: flex;
@@ -341,7 +301,6 @@
 .chip.offline { background: rgba(75,85,99,.2);    color: var(--sp-muted);  border: 1px solid rgba(75,85,99,.3); }
 
 
-/* ── Map Card ───────────────────────────────────────────────── */
 
 .map-card {
     background: var(--sp-surface);
@@ -364,7 +323,6 @@
 }
 
 
-/* ── Activity Card ──────────────────────────────────────────── */
 
 .activity-card {
     background: var(--sp-surface);
@@ -416,8 +374,6 @@
 }
 
 
-/* ── Bottom Grid ────────────────────────────────────────────── */
-
 .bottom-grid {
     display: grid;
     grid-template-columns: 1fr 300px;
@@ -426,7 +382,6 @@
 }
 
 
-/* ── Table Card ─────────────────────────────────────────────── */
 
 .table-card {
     background: var(--sp-surface);
@@ -475,7 +430,6 @@
 .user-name { font-size: 12px; font-weight: 600; color: var(--sp-text); }
 .user-team { font-size: 10px; color: var(--sp-muted); margin-top: 1px; }
 
-/* Scoped status-dot — avoids conflict with Odoo's own .status-dot */
 .sp-status-dot {
     display: inline-flex;
     align-items: center;
@@ -529,8 +483,6 @@
 .mono { font-family: 'DM Mono', monospace; }
 
 
-/* ── KPI Card ───────────────────────────────────────────────── */
-
 .kpi-card {
     background: var(--sp-surface);
     border: 1px solid var(--sp-border);
@@ -577,8 +529,6 @@
     font-family: 'DM Mono', monospace;
 }
 
-
-/* ── Responsive ─────────────────────────────────────────────── */
 
 @media (max-width: 1200px) {
     .mid-grid    { grid-template-columns: 1fr; }
