@@ -2,7 +2,9 @@
     'use strict';
     function init() {
         const openBtn      = document.getElementById('openCameraBtn');
-        if (!openBtn) return;  
+        if (!openBtn) return;
+        if (openBtn.dataset.cameraInit) return;   // ← already initialised, skip
+        openBtn.dataset.cameraInit = '1';
 
         const video        = document.getElementById('selfieVideo');
         const canvas       = document.getElementById('selfieCanvas');
@@ -28,6 +30,7 @@
         let facingMode   = 'environment';
         let photos       = [];
         let viewingIndex = -1;
+        let isUploading  = false;   // ← guard: prevent double-upload
         function isSecureContext() {
             return (
                 window.isSecureContext === true ||               
@@ -161,16 +164,18 @@
         ══════════════════════════════════════════════ */
         function capturePhoto() {
             if (!stream) return;
+            if (isUploading) return;   // ← block double-click
+            isUploading = true;
+            captureBtn.disabled = true;
 
             flashEl.classList.add('go');
             setTimeout(function () { flashEl.classList.remove('go'); }, 160);
-            console.log("📸 Capture button clicked");
+
             // Draw frame to hidden canvas
             canvas.width  = video.videoWidth  || 640;
             canvas.height = video.videoHeight || 480;
             const ctx = canvas.getContext('2d');
 
-            // Mirror front camera so selfies look natural
             if (facingMode === 'user') {
                 ctx.translate(canvas.width, 0);
                 ctx.scale(-1, 1);
@@ -180,38 +185,91 @@
             const dataUrl  = canvas.toDataURL('image/jpeg', 0.92);
             const filename = 'photo_' + Date.now() + '.jpg';
 
-            // Add to local gallery immediately
             photos.push({ dataUrl: dataUrl, ts: new Date().toLocaleTimeString() });
             downloadLink.href     = dataUrl;
             downloadLink.download = filename;
 
-            // Upload to Odoo backend
-            fetch('/salesperson_tracking/save_photo', {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    jsonrpc: '2.0',
-                    method:  'call',
-                    id:      Date.now(),
-                    params:  { image_data: dataUrl, filename: filename },
-                }),
-            })
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-                var result = data.result;
+            function releaseGuard() {
+                isUploading         = false;
+                captureBtn.disabled = false;
+            }
 
-                console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#$#$#$",result)
+            // Get GPS location then upload
+            function doUpload(latitude, longitude, location_name) {
+                fetch('/salesperson_tracking/save_photo', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        method:  'call',
+                        id:      Date.now(),
+                        params:  {
+                            image_data:    dataUrl,
+                            filename:      filename,
+                            latitude:      latitude,
+                            longitude:     longitude,
+                            location_name: location_name,
+                        },
+                    }),
+                })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    var result = data.result;
+                    camLabel.textContent = result && result.success
+                        ? '✓ Photo saved in Odoo!'
+                        : (result && result.message ? result.message : 'Upload failed');
+                    if (result && result.success) snapRow.style.display = 'flex';
+                })
+                .catch(function (err) {
+                    console.error('Photo upload error:', err);
+                    camLabel.textContent = 'Upload failed — network error';
+                })
+                .finally(releaseGuard);   // ← always unlock after response
+            }
 
-                
-                camLabel.textContent = result && result.success
-                    ? '✓ Photo saved in Odoo!'
-                    : (result && result.message ? result.message : 'Upload failed');
-                if (result && result.success) snapRow.style.display = 'flex';
-            })
-            .catch(function (err) {
-                console.error('Photo upload error:', err);
-                camLabel.textContent = 'Upload failed — network error';
-            });
+            // Try to get GPS — upload either way
+            if (navigator.geolocation) {
+                camLabel.textContent = '📍 Getting location…';
+                navigator.geolocation.getCurrentPosition(
+                    function (pos) {
+                        var lat = pos.coords.latitude.toFixed(7);
+                        var lng = pos.coords.longitude.toFixed(7);
+
+                        // Reverse geocode via Nominatim to get human-readable address
+                        fetch(
+                            'https://nominatim.openstreetmap.org/reverse'
+                            + '?format=jsonv2&lat=' + lat + '&lon=' + lng,
+                            { headers: { 'Accept-Language': 'en' } }
+                        )
+                        .then(function (r) { return r.json(); })
+                        .then(function (geo) {
+                            var addr = geo && geo.display_name
+                                ? geo.display_name
+                                : lat + ', ' + lng;
+                            doUpload(lat, lng, addr);
+                        })
+                        .catch(function () {
+                            // Nominatim failed — use raw coords
+                            doUpload(lat, lng, lat + ', ' + lng);
+                        });
+                    },
+                    function (err) {
+                        var reasons = {
+                            1: 'Permission denied — allow location in browser settings',
+                            2: 'Position unavailable — GPS/network error',
+                            3: 'Timeout — GPS took too long',
+                        };
+                        console.warn('📍 Geolocation error code', err.code, ':', reasons[err.code] || err.message);
+                        camLabel.textContent = '⚠️ ' + (reasons[err.code] || 'Location error');
+                        doUpload(null, null, null);
+                    },
+                    { timeout: 10000, maximumAge: 60000, enableHighAccuracy: false }
+                );
+            } else {
+                doUpload(null, null, null);
+            }
+
+            // GPS fetch done above in doUpload()
 
             snapRow.style.display = 'flex';
             setTimeout(function () {
