@@ -173,21 +173,14 @@
                             <div class="d-flex gap-2 flex-wrap">
                                 <button type="object" name="action_open_live_tracking_page"
                                         class="btn btn-sm btn-primary flex-grow-1"
-                                        invisible="state in ('done', 'visited')">
+                                        invisible="state in ('done', 'visited','rejected','planned')">
                                     Live page
                                 </button>
                                 <button type="object" name="action_open_moving_map_view"
-                                    class="btn btn-sm btn-outline-primary">
+                                    class="btn btn-sm btn-outline-primary flex-grow-1">
                                     <i class="fa fa-map-marker me-1"/>Map
                                 </button>
-                                <button type="object" name="action_view_checkins"
-                                    class="btn btn-sm btn-outline-secondary">
-                                    Check-ins
-                                </button>
-                                <button type="object" name="action_view_kpi"
-                                    class="btn btn-sm btn-outline-secondary">
-                                    KPI
-                                </button>
+                            
                             </div>
 
                         </div>
