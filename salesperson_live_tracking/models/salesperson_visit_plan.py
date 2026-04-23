@@ -96,6 +96,7 @@ class SalespersonVisitPlan(models.Model):
     state = fields.Selection([
         ("draft", "Draft"),
         ("submitted", "Submitted"),
+        ("accepted", "Accepted"),
         ("done", "Done")
     ], default="draft", tracking=True)
 
@@ -171,7 +172,7 @@ class SalespersonVisitPlan(models.Model):
                 "manager": rec.user_id.parent_id.name if rec.user_id.parent_id else False,
                 "visit_date": rec.visit_date,
                 "location_name":rec.location_name,
-                "state": 'accepted',
+                "state": 'planned',
                 "expense_transport": rec.expense_transport,
                 "expense_food": rec.expense_food,
                 "expense_other": rec.expense_other,

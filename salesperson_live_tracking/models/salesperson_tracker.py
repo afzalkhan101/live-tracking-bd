@@ -269,7 +269,21 @@ class SalespersonTracker(models.Model):
         self.filtered(lambda r: r.state in ('accepted', 'visited')).write({'state': 'planned'})
 
     def action_set_accepted(self):
-        self.filtered(lambda r: r.state == 'planned').write({'state': 'accepted'})
+        records = self.filtered(lambda r: r.state == 'planned')
+        records.write({'state': 'accepted'})
+
+        for rec in records:
+            today = fields.Date.context_today(rec)
+
+            plans = self.env["salesperson.visit.plan"].search([
+                ("user_id", "=", rec.user_id.id),
+                ("visit_date", "=", today),
+            ])
+
+            if plans:
+                plans.with_context(tracking_disable=True).write({
+                    "state": "accepted"
+                })
 
     def action_set_rejected(self):
         self.ensure_one()
@@ -281,7 +295,7 @@ class SalespersonTracker(models.Model):
             'target':     'new',
             'context':    {'default_tracker_id': self.id, 'dialog_size': 'medium'},
         }
-
+    
     def action_set_visited(self):
         self.filtered(lambda r: r.state == 'accepted').write({'state': 'visited'})
 

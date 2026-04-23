@@ -168,8 +168,7 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Action Buttons -->
+                            
                             <div class="d-flex gap-2 flex-wrap">
                                 <button type="object" name="action_open_live_tracking_page"
                                         class="btn btn-sm btn-primary flex-grow-1"
