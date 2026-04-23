@@ -23,6 +23,6 @@
             "salesperson_live_tracking/static/src/css/style.css",
         ],
     },
-    "application": False,
+    "application": True,
     "license": "LGPL-3",
 }
