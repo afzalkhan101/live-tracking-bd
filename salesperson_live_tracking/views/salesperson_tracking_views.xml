@@ -217,24 +217,26 @@
                 <header>
 
                     <button name="action_set_accepted"
-                            string="Accept"
-                            type="object"
-                            class="btn-success"
-                            invisible="state != 'planned'"/>
+                        string="Accept"
+                        type="object"
+                        class="btn-success"
+                        groups="sales_team.group_sale_manager"
+                        invisible="state != 'planned'"/>
 
                     <button name="action_set_rejected"
                             string="Reject"
                             type="object"
                             class="btn-danger"
-                            invisible="state != 'planned' or is_salesperson"/>
+                            groups="sales_team.group_sale_manager"
+                            invisible="state != 'planned'"/>
 
                     <button name="action_set_visited"
                             string="Mark as Visited"
                             type="object"
                             class="btn-primary"
-                            invisible="state != 'accepted' or is_manager"/>
+                            groups="sales_team.group_sale_salesman"
+                            invisible="state != 'accepted'"/>
 
-                    <!-- visited → done -->
                     <button name="action_set_done"
                             string="Done"
                             type="object"

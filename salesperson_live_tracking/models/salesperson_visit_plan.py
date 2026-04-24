@@ -178,41 +178,56 @@ class SalespersonVisitPlan(models.Model):
 
 
     def _push_to_dashboard(self):
-
         salesperson_tracker = self.env["salesperson.tracker"]
         Line = self.env["sales.person.space.line"]
+
         for rec in self:
             tracker = salesperson_tracker.search([
-                ("user_id", "=", rec.user_id.id)
+                ("plan_id", "=", rec.id)
             ], limit=1)
 
-            tracker = tracker.create({
-                "user_id": rec.user_id.id,   
-                "sales_person": rec.user_id.name,
-                "manager": rec.user_id.parent_id.name if rec.user_id.parent_id else False,
-                "visit_date": rec.visit_date,
-                "location_name":rec.location_name,
-                "state": 'planned',
-                "expense_transport": rec.expense_transport,
-                "expense_food": rec.expense_food,
-                "expense_other": rec.expense_other,
-                "plan_id": rec.id, 
-                "checkin_time": rec.checkin_time,
-                "checkout_time": rec.checkout_time,
-            })
-            rec.tracker_id = tracker.id 
+            if not tracker:
+                tracker = salesperson_tracker.create({
+                    "user_id": rec.user_id.id,
+                    "sales_person": rec.user_id.name,
+                    "manager": rec.user_id.parent_id.name if rec.user_id.parent_id else False,
+                    "visit_date": rec.visit_date,
+                    "location_name": rec.location_name,
+                    "state": 'planned',
+                    "expense_transport": rec.expense_transport,
+                    "expense_food": rec.expense_food,
+                    "expense_other": rec.expense_other,
+                    "plan_id": rec.id,
+                    "checkin_time": rec.checkin_time,
+                    "checkout_time": rec.checkout_time,
+                })
+            else:
+                tracker.write({
+                    "location_name": rec.location_name,
+                    "expense_transport": rec.expense_transport,
+                    "expense_food": rec.expense_food,
+                    "expense_other": rec.expense_other,
+                })
 
-            tracker.partner_ids = [(6, 0, rec.partner_ids.ids)]
+            rec.tracker_id = tracker.id
+
+            tracker.write({
+                "partner_ids": [(6, 0, rec.partner_ids.ids)]
+            })
+
+            # পরিষ্কার করে আবার create
+            tracker.line_ids.unlink()
+
             for space_line in rec.space_line_ids:
                 Line.create({
-                        "salesperson_tracker_id": tracker.id,  
-                        "plan_id": rec.id,
-                        "partner_id": space_line.partner_id.id,
-                        "visit_date": space_line.visit_date,
-                        "from_location": space_line.from_location,
-                        "to_location": space_line.to_location,
-                        "total_cost": space_line.total_cost,
-                        "notes": space_line.notes or "",
+                    "salesperson_tracker_id": tracker.id,
+                    "plan_id": rec.id,
+                    "partner_id": space_line.partner_id.id,
+                    "visit_date": space_line.visit_date,
+                    "from_location": space_line.from_location,
+                    "to_location": space_line.to_location,
+                    "total_cost": space_line.total_cost,
+                    "notes": space_line.notes or "",
                 })
   
     @api.model_create_multi

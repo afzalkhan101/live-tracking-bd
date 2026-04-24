@@ -77,6 +77,11 @@ class SalespersonTracker(models.Model):
     ], default="0")
 
     coverage_color = fields.Integer(compute="_compute_coverage_color")
+    plan_id = fields.Many2one(
+    "salesperson.visit.plan",
+    string="Visit Plan",
+    ondelete="cascade"
+   )
 
     purpose = fields.Selection([
         ('order',    'New Order'),
