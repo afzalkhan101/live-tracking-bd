@@ -555,8 +555,7 @@ class SalesPersonSpaceLine(models.Model):
     notes         = fields.Text(string="Notes")
     state         = fields.Selection(related="plan_id.state", string="Status", store=True)
 
-
-# ══════════════════════════════════════════════════════════════════════════════
+    
 class SalespersonLocationLog(models.Model):
     _name        = "salesperson.location.log"
     _description = "Salesperson Location History"

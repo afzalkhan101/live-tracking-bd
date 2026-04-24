@@ -649,36 +649,58 @@ class SalespersonDashboard(http.Controller):
         import json as _json
         values['json'] = _json
         return request.render('salesperson_live_tracking.salesperson_dashboard', values)
-
     @http.route('/salesperson/dashboard/data', type='http', auth='user', methods=['GET'], csrf=False)
     def dashboard_data_json(self, **kwargs):
-        """JSON endpoint for live-refresh of tracker positions and stats."""
         user = request.env.user
         today = fields.Date.context_today(user)
         today_dt = fields.Datetime.to_datetime(today)
         is_manager = user.has_group('sales_team.group_sale_manager')
 
         TrackerModel = request.env['salesperson.tracker'].sudo()
-        if is_manager:
-            trackers = TrackerModel.search([])
-        else:
-            trackers = TrackerModel.search([('user_id', '=', user.id)])
+        trackers = TrackerModel.search([]) if is_manager else TrackerModel.search([('user_id', '=', user.id)])
 
         PlanModel = request.env['salesperson.visit.plan'].sudo()
+        LogModel  = request.env['salesperson.location.log'].sudo()  # ← NEW
+
         data = []
         for t in trackers:
-            plans = PlanModel.search([('visit_date', '=', today), ('user_id', '=', t.user_id.id)])
+            plans   = PlanModel.search([('visit_date', '=', today), ('user_id', '=', t.user_id.id)])
             covered = len(plans.filtered('is_covered'))
             total   = len(plans)
+
+            # ── NEW: fetch today's location history ──────────────────────────
+            logs = LogModel.search(
+                [('tracker_id', '=', t.id), ('tracked_at', '>=', today_dt)],
+                order='tracked_at asc',
+                limit=500,  # safety cap — enough for a full day
+            )
+            points = [
+                {
+                    'lat': log.latitude,
+                    'lng': log.longitude,
+                    'time': fields.Datetime.to_string(log.tracked_at),
+                    'loc':  log.location_name or '',
+                    'spd':  round(log.speed * 3.6, 1) if log.speed else None,  # m/s → km/h
+                }
+                for log in logs
+                if log.latitude and log.longitude
+                and (not log.accuracy or log.accuracy <= 200)  # filter noisy points
+            ]
+            # ────────────────────────────────────────────────────────────────
+
+            initials = ''.join(w[0].upper() for w in (t.user_id.name or 'SP').split()[:2])
+
             data.append({
                 'id':       t.id,
                 'name':     t.user_id.name or '',
+                'initials': initials,
                 'status':   t.tracking_status or 'offline',
                 'lat':      t.latitude or 0.0,
                 'lng':      t.longitude or 0.0,
                 'location': t.location_name or '',
                 'covered':  covered,
                 'total':    total,
+                'points':   points,   # ← NEW
             })
 
         live_count = sum(1 for d in data if d['status'] == 'live')
