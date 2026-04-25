@@ -87,6 +87,16 @@
             color: var(--text);
         }
 
+        /* Leaflet custom marker fix */
+            .leaflet-marker-pane img.leaflet-marker-icon {
+                display: none !important;
+            }
+            .x-marker {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+
         .nav-brand-icon {
             width: 34px;
             height: 34px;
@@ -1146,32 +1156,29 @@
 
         // Status colors
         var statusColors = {
-            live:    '#16A34A',
-            idle:    '#EAB308',
-            offline: '#EAB308',
+            live:    '#059669',
+            idle:    '#D97706',
+            offline: '#94A3B8',
         };
 
         function makeIcon(status, initials) {
-            var colorMap = {
-                live:    { bg: '#16A34A', border: '#fff', text: '#fff', pulse: '#16A34A' },
-                idle:    { bg: '#EAB308', border: '#fff', text: '#fff', pulse: null },
-                offline: { bg: '#EAB308', border: '#fff', text: '#fff', pulse: null },
-            };
-            var c = colorMap[status] || colorMap.offline;
-
+            var bg = status === 'live' ? '#16A34A' : '#EAB308';
             var pulse = status === 'live'
-                ? '<div style="position:absolute;inset:-6px;border-radius:50%;border:3px solid ' + c.pulse + ';opacity:.4;animation:pulse-ring 1.8s infinite;"></div>'
+                ? '<circle cx="21" cy="21" r="19" fill="none" stroke="#16A34A" stroke-width="2" opacity="0.4"><animate attributeName="r" from="19" to="26" dur="1.8s" repeatCount="indefinite"/><animate attributeName="opacity" from="0.4" to="0" dur="1.8s" repeatCount="indefinite"/></circle>'
                 : '';
 
+            var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 42 42">'
+                + pulse
+                + '<circle cx="21" cy="21" r="18" fill="' + bg + '" stroke="#ffffff" stroke-width="3"/>'
+                + '<text x="21" y="26" text-anchor="middle" font-size="12" font-weight="bold" font-family="Arial,sans-serif" fill="#ffffff">' + initials + '</text>'
+                + '</svg>';
+
             return L.divIcon({
-                html: '<div style="position:relative;width:42px;height:42px;">'
-                    + pulse
-                    + '<div style="width:42px;height:42px;border-radius:50%;background:' + c.bg + ';border:4px solid #fff;box-shadow:0 3px 16px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:' + c.text + ';font-family:DM Sans,sans-serif;letter-spacing:.5px;">'
-                    + initials
-                    + '</div></div>',
-                iconSize:   [42, 42],
-                iconAnchor: [21, 21],
-                className:  '',
+                html:        svg,
+                iconSize:    [42, 42],
+                iconAnchor:  [21, 21],
+                popupAnchor: [0, -22],
+                className:   'x-marker',
             });
         }
 
