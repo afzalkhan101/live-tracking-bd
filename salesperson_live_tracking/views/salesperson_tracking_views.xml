@@ -252,7 +252,7 @@
                         statusbar_visible="planned,accepted,visited,done"/>
                 </header>
                 <sheet>
-                    <div class="oe_button_box" name="button_box">
+                    <!-- <div class="oe_button_box" name="button_box">
                         <button name="action_view_history" type="object" class="oe_stat_button" icon="fa-map-marker">
                             <div class="o_stat_info">
                                 <field name="history_count" class="o_stat_value"/>
@@ -277,7 +277,7 @@
                                 <span class="o_stat_text">KPI %</span>
                             </div>
                         </button>
-                    </div>
+                    </div> -->
                     <div class="oe_title">
                         <h1><field name="user_id"/></h1>
                         <div class="text-muted">
